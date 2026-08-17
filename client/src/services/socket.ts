@@ -7,9 +7,10 @@ export const getSocket = (): Socket => {
     const serverUrl = import.meta.env.VITE_SERVER_URL || window.location.origin;
     socketInstance = io(serverUrl, {
       transports: ['websocket', 'polling'],
-      autoConnect: false,
-      reconnectionAttempts: 10,
+      autoConnect: true,
+      reconnectionAttempts: 20,
       reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000
     });
   }
   return socketInstance;

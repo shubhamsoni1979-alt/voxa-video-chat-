@@ -7,9 +7,10 @@ import { VideoControls } from '../components/VideoControls';
 import { ConnectionStatus } from '../components/ConnectionStatus';
 import { MatchmakingScreen } from '../components/MatchmakingScreen';
 import { PartnerDisconnected } from '../components/PartnerDisconnected';
+import { ChatPanel } from '../components/ChatPanel';
 import { ReportModal } from '../components/ReportModal';
 import { Toast } from '../components/Toast';
-import { Video, ArrowLeft, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ShieldCheck } from 'lucide-react';
 
 export const VideoChat: React.FC = () => {
   const navigate = useNavigate();
@@ -26,6 +27,8 @@ export const VideoChat: React.FC = () => {
     peerMediaState,
     isReportModalOpen,
     toastMessage,
+    chatMessages,
+    sendMessage,
     setIsReportModalOpen,
     startMatchmaking,
     nextMatch,
@@ -49,13 +52,15 @@ export const VideoChat: React.FC = () => {
     navigate('/');
   };
 
+  const isConnected = connectionState === 'connected';
+
   return (
     <div
       ref={containerRef}
       className="relative w-screen h-screen bg-[#080B11] flex flex-col justify-between overflow-hidden select-none"
     >
       {/* Top Header Bar */}
-      <header className="z-20 w-full px-4 sm:px-6 py-3 flex items-center justify-between glass-nav border-b border-white/5">
+      <header className="z-20 w-full px-4 sm:px-6 py-3 flex items-center justify-between glass-nav border-b border-white/5 shrink-0">
         <div className="flex items-center space-x-3">
           <button
             onClick={handleExit}
@@ -65,11 +70,25 @@ export const VideoChat: React.FC = () => {
             <ArrowLeft className="w-5 h-5" />
           </button>
           
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-lg gradient-brand-button flex items-center justify-center shadow-md">
-              <Video className="w-4 h-4 text-white" />
+          <div className="flex items-center space-x-2.5">
+            {/* Voxa Red V Badge Logo */}
+            <div className="w-8 h-8 rounded-xl bg-[#B8001C] flex items-center justify-center text-white shadow-md border border-red-700/40">
+              <svg 
+                className="w-5 h-5" 
+                viewBox="0 0 100 100" 
+                fill="none" 
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path 
+                  d="M25 35 L50 68 L75 35" 
+                  stroke="currentColor" 
+                  strokeWidth="12" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                />
+              </svg>
             </div>
-            <span className="font-extrabold text-lg font-outfit tracking-tight text-white hidden sm:inline">
+            <span className="font-heading font-black text-xl tracking-tight text-white hidden sm:inline">
               VOXA
             </span>
           </div>
@@ -79,67 +98,80 @@ export const VideoChat: React.FC = () => {
         <ConnectionStatus state={connectionState} message={statusMessage} />
 
         {/* Privacy Note Badge */}
-        <div className="hidden md:flex items-center space-x-1.5 text-xs text-slate-400">
+        <div className="hidden md:flex items-center space-x-1.5 text-xs text-slate-400 font-sans">
           <ShieldCheck className="w-4 h-4 text-emerald-400" />
           <span>Encrypted P2P Stream</span>
         </div>
       </header>
 
-      {/* Main Video Viewport */}
-      <main className="relative flex-1 w-full h-full p-2 sm:p-4 flex items-center justify-center overflow-hidden">
+      {/* Main Viewport Grid: Video Viewport + Static Permanent Text Chat Panel */}
+      <main className="relative flex-1 w-full h-full p-2 sm:p-4 flex items-stretch overflow-hidden gap-3">
         
-        {/* Remote Video Container */}
-        <RemoteVideo
-          stream={remoteStream}
-          peerMediaState={peerMediaState}
-          isConnected={connectionState === 'connected'}
-        />
+        {/* Left Side: Flexible Video Viewport Area */}
+        <div className="relative flex-1 min-w-0 h-full rounded-2xl overflow-hidden flex items-center justify-center bg-slate-950 border border-white/10 shadow-2xl">
+          
+          {/* Remote Video Container */}
+          <RemoteVideo
+            stream={remoteStream}
+            peerMediaState={peerMediaState}
+            isConnected={isConnected}
+          />
 
-        {/* Floating PiP Local Video Preview */}
-        {localStream && (
-          <div className="absolute top-4 right-4 sm:top-8 sm:right-8 z-20">
-            <LocalVideo
-              stream={localStream}
-              cameraOn={cameraOn}
-              micOn={micOn}
+          {/* Floating PiP Local Video Preview */}
+          {localStream && (
+            <div className="absolute top-4 right-4 z-20">
+              <LocalVideo
+                stream={localStream}
+                cameraOn={cameraOn}
+                micOn={micOn}
+              />
+            </div>
+          )}
+
+          {/* Overlay: Searching State */}
+          {(connectionState === 'searching' || connectionState === 'requesting_media') && (
+            <MatchmakingScreen
+              statusMessage={statusMessage}
+              onCancel={handleExit}
             />
-          </div>
-        )}
+          )}
 
-        {/* Overlay: Searching State */}
-        {(connectionState === 'searching' || connectionState === 'requesting_media') && (
-          <MatchmakingScreen
-            statusMessage={statusMessage}
-            onCancel={handleExit}
-          />
-        )}
+          {/* Overlay: Partner Disconnected */}
+          {connectionState === 'partner_disconnected' && (
+            <PartnerDisconnected
+              onNext={nextMatch}
+              onHome={handleExit}
+              message={statusMessage}
+            />
+          )}
 
-        {/* Overlay: Partner Disconnected */}
-        {connectionState === 'partner_disconnected' && (
-          <PartnerDisconnected
-            onNext={nextMatch}
-            onHome={handleExit}
-            message={statusMessage}
-          />
-        )}
-
-        {/* Error Alert Box */}
-        {mediaError && (
-          <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 max-w-md w-full px-4">
-            <div className="bg-rose-950/90 border border-rose-500/40 text-rose-200 p-4 rounded-2xl shadow-2xl flex items-start space-x-3 backdrop-blur-md">
-              <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
-              <div className="text-xs sm:text-sm">
-                <div className="font-bold mb-0.5">Media Access Error</div>
-                <div>{mediaError}</div>
+          {/* Error Alert Box */}
+          {mediaError && (
+            <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 max-w-md w-full px-4">
+              <div className="bg-rose-950/90 border border-rose-500/40 text-rose-200 p-4 rounded-2xl shadow-2xl flex items-start space-x-3 backdrop-blur-md">
+                <div className="text-xs sm:text-sm">
+                  <div className="font-bold mb-0.5">Media Access Error</div>
+                  <div>{mediaError}</div>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+
+        </div>
+
+        {/* Right Side: PERMANENT & STATIC Text Chat Panel */}
+        <div className="hidden md:flex w-[350px] lg:w-[380px] shrink-0 h-full z-20">
+          <ChatPanel
+            messages={chatMessages}
+            onSendMessage={sendMessage}
+            isConnected={isConnected}
+          />
+        </div>
 
       </main>
 
       {/* Bottom Controls Bar */}
-      <footer className="z-20 w-full p-3 sm:p-5">
+      <footer className="z-20 w-full p-3 sm:p-5 shrink-0">
         <VideoControls
           cameraOn={cameraOn}
           micOn={micOn}

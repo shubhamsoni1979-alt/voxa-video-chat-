@@ -18,14 +18,14 @@ export const LocalVideo: React.FC<LocalVideoProps> = ({ stream, cameraOn, micOn 
 
   return (
     <div className="relative w-32 sm:w-44 aspect-[4/3] rounded-2xl overflow-hidden glass-card border border-white/20 shadow-2xl transition-all duration-300 group hover:scale-105">
-      {/* Video Stream */}
+      {/* Local Video Stream - Mirrored */}
       {stream && cameraOn ? (
         <video
           ref={videoRef}
           autoPlay
           playsInline
           muted
-          className="w-full h-full object-cover transform -scale-x-100" // Mirror local video for natural look
+          className="w-full h-full object-cover transform -scale-x-100"
         />
       ) : (
         <div className="w-full h-full bg-slate-900 flex flex-col items-center justify-center p-2 text-slate-400">
@@ -37,7 +37,7 @@ export const LocalVideo: React.FC<LocalVideoProps> = ({ stream, cameraOn, micOn 
       )}
 
       {/* Label & Status Indicators */}
-      <div className="absolute bottom-1.5 left-2 right-2 flex items-center justify-between text-[10px] font-semibold text-white pointer-events-none drop-shadow-md">
+      <div className="absolute bottom-1.5 left-2 right-2 flex items-center justify-between text-[10px] font-semibold text-white pointer-events-none drop-shadow-md font-sans">
         <span className="bg-slate-950/60 px-1.5 py-0.5 rounded backdrop-blur-sm">You</span>
         <div className="flex items-center space-x-1">
           {!micOn && (

@@ -64,6 +64,17 @@ export function registerSignalingHandlers(io: Server, socket: Socket): void {
     logger.info(`User [${socket.id}] blocked partner [${data.targetSocketId}]`);
   });
 
+  // Real-time Text Chat Message Relay
+  socket.on('chat_message', async (data: { roomId: string; text: string; id: string; timestamp: number }) => {
+    if (!data || !data.roomId || !data.text) return;
+    socket.to(data.roomId).emit('chat_message', {
+      text: data.text,
+      id: data.id,
+      timestamp: data.timestamp,
+      senderSocketId: socket.id
+    });
+  });
+
   // Leave room
   socket.on('leave_room', async () => {
     const session = await redisService.getSession(socket.id);

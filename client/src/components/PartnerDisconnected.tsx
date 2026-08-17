@@ -1,5 +1,6 @@
 import React from 'react';
-import { UserX, FastForward, Home } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { FastForward, Home } from 'lucide-react';
 
 interface PartnerDisconnectedProps {
   onNext: () => void;
@@ -9,39 +10,52 @@ interface PartnerDisconnectedProps {
 
 export const PartnerDisconnected: React.FC<PartnerDisconnectedProps> = ({ onNext, onHome, message }) => {
   return (
-    <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-slate-950/90 backdrop-blur-md p-6 text-center space-y-6 animate-fadeIn">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-slate-950/92 backdrop-blur-md p-6 text-center space-y-6 font-sans"
+    >
       
-      <div className="w-20 h-20 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shadow-xl">
-        <UserX className="w-10 h-10" />
-      </div>
+      <motion.div
+        animate={{ scale: [1, 1.06, 1] }}
+        transition={{ duration: 3, repeat: Infinity }}
+        className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#E60023] via-[#B8001C] to-[#8B0014] text-white border-2 border-white/30 shadow-2xl flex items-center justify-center text-4xl"
+      >
+        <span>👋</span>
+      </motion.div>
 
       <div className="space-y-2 max-w-sm">
-        <h2 className="text-2xl sm:text-3xl font-extrabold font-outfit text-white">
-          {message || 'They left the conversation.'}
+        <h2 className="text-3xl sm:text-4xl font-black font-heading text-white tracking-tight">
+          {message || 'They left the conversation!'}
         </h2>
-        <p className="text-slate-400 text-sm">
-          Don't worry! Click below to immediately match with someone new.
+        <p className="text-slate-300 font-sans text-sm font-medium">
+          Don't worry! Click NEXT to immediately match with someone new! 🚀
         </p>
       </div>
 
       <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 w-full max-w-xs">
-        <button
+        <motion.button
+          whileHover={{ scale: 1.04 }}
+          whileTap={{ scale: 0.96 }}
           onClick={onNext}
-          className="w-full gradient-brand-button text-white text-base font-bold py-3.5 px-6 rounded-2xl flex items-center justify-center space-x-2 shadow-xl shadow-indigo-600/30 hover:scale-[1.02] active:scale-95 transition-all"
+          className="w-full spidey2-btn-red text-white text-base font-extrabold py-3.5 px-6 rounded-2xl flex items-center justify-center space-x-2 shadow-lg"
         >
           <FastForward className="w-5 h-5" />
-          <span>NEXT PERSON</span>
-        </button>
+          <span>NEXT PERSON 🚀</span>
+        </motion.button>
 
-        <button
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={onHome}
-          className="w-full glass-card text-slate-300 text-sm font-semibold py-3.5 px-6 rounded-2xl flex items-center justify-center space-x-2 hover:bg-white/10 transition-colors"
+          className="w-full bg-slate-900 hover:bg-slate-800 text-white border border-white/20 text-sm font-bold py-3.5 px-6 rounded-2xl flex items-center justify-center space-x-2"
         >
-          <Home className="w-4 h-4" />
-          <span>Exit to Home</span>
-        </button>
+          <Home className="w-4 h-4 text-slate-400" />
+          <span>Exit to Home 🏠</span>
+        </motion.button>
       </div>
 
-    </div>
+    </motion.div>
   );
 };

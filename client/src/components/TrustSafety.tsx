@@ -1,5 +1,6 @@
 import React from 'react';
 import { ShieldCheck, Lock, Zap, RefreshCw, Sliders, Flag } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export const TrustSafety: React.FC = () => {
   const trustFeatures = [
@@ -7,49 +8,53 @@ export const TrustSafety: React.FC = () => {
       title: 'Instant Matching',
       desc: 'Powered by Redis real-time queues. Pairs available users in milliseconds.',
       icon: Zap,
-      color: 'text-amber-400'
+      color: 'text-[#B8001C]'
     },
     {
       title: 'Zero Registration',
       desc: 'No account creation, email confirmation, or profiles required. Complete privacy.',
       icon: Lock,
-      color: 'text-cyan-400'
+      color: 'text-slate-900'
     },
     {
       title: 'Private Peer-to-Peer Video',
-      desc: 'Video and audio stream directly between users via encrypted WebRTC. Never saved on servers.',
+      desc: 'Video and audio stream directly between users via encrypted WebRTC.',
       icon: ShieldCheck,
-      color: 'text-emerald-400'
+      color: 'text-[#B8001C]'
     },
     {
       title: 'One-Click Next',
-      desc: 'Instantly leave any uncomfortable conversation and match with someone new in a fraction of a second.',
+      desc: 'Instantly leave any uncomfortable conversation and match with someone new.',
       icon: RefreshCw,
-      color: 'text-indigo-400'
+      color: 'text-slate-900'
     },
     {
       title: 'Media Controls',
-      desc: 'Full tactile control over your camera, microphone, and device facing mode at any time.',
+      desc: 'Full tactile control over your camera, microphone, and device facing mode.',
       icon: Sliders,
-      color: 'text-purple-400'
+      color: 'text-[#B8001C]'
     },
     {
       title: 'Report & Block Tools',
       desc: 'Built-in blocklist and strict violation reporting to immediately ban bad actors.',
       icon: Flag,
-      color: 'text-rose-400'
+      color: 'text-slate-900'
     }
   ];
 
   return (
-    <section className="py-16 md:py-24 relative overflow-hidden">
+    <section className="py-16 md:py-24 bg-white relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-          <span className="text-xs uppercase tracking-widest text-emerald-400 font-bold">Safety First Infrastructure</span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold font-outfit text-white">Built for Spontaneous Conversations</h2>
-          <p className="text-slate-400 text-sm sm:text-base">Designed from the ground up with user protection, privacy, and speed as core tenets.</p>
+          <span className="text-xs uppercase font-sans tracking-widest text-[#B8001C] font-bold">
+            SAFETY FIRST INFRASTRUCTURE
+          </span>
+          <h2 className="text-3xl sm:text-5xl font-black font-serifHeading text-slate-900">
+            Built for Spontaneous Connections
+          </h2>
+          <p className="text-slate-600 font-sans text-sm sm:text-base">Designed from the ground up with user protection, privacy, and speed as core tenets.</p>
         </div>
 
         {/* Features Grid */}
@@ -57,16 +62,17 @@ export const TrustSafety: React.FC = () => {
           {trustFeatures.map((feat, index) => {
             const Icon = feat.icon;
             return (
-              <div
+              <motion.div
                 key={index}
-                className="glass-card rounded-2xl p-6 border border-white/5 hover:border-indigo-500/30 transition-all duration-200"
+                whileHover={{ scale: 1.02, y: -4 }}
+                className="spidey2-card-white rounded-3xl p-6 border border-slate-200"
               >
-                <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center mb-4">
                   <Icon className={`w-6 h-6 ${feat.color}`} />
                 </div>
-                <h3 className="text-lg font-bold font-outfit text-white mb-2">{feat.title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">{feat.desc}</p>
-              </div>
+                <h3 className="text-xl font-bold font-serifHeading text-slate-900 mb-2">{feat.title}</h3>
+                <p className="text-slate-600 font-sans text-sm leading-relaxed">{feat.desc}</p>
+              </motion.div>
             );
           })}
         </div>

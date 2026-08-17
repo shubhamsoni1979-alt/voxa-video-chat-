@@ -1,26 +1,28 @@
 import React from 'react';
 import { Navbar } from '../components/Navbar';
+import { MarqueeBanner } from '../components/MarqueeBanner';
 import { Footer } from '../components/Footer';
 import { ShieldCheck, Lock, ServerOff, Cpu } from 'lucide-react';
 
 export const Privacy: React.FC = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-[#0B0F17] text-slate-200">
+    <div className="min-h-screen flex flex-col bg-white text-slate-900">
       <Navbar />
+      <MarqueeBanner />
 
       <main className="flex-grow max-w-4xl mx-auto px-4 py-12 sm:py-16 space-y-8">
         <div className="text-center space-y-3">
-          <span className="text-xs font-bold uppercase tracking-widest text-cyan-400">Data Protection</span>
-          <h1 className="text-4xl font-extrabold font-outfit text-white">Voxa Privacy Policy</h1>
-          <p className="text-slate-400 text-base max-w-xl mx-auto">
+          <span className="text-xs font-bold uppercase tracking-widest text-[#B8001C]">Data Protection</span>
+          <h1 className="text-4xl font-extrabold font-heading text-slate-900">Voxa Privacy Policy</h1>
+          <p className="text-slate-600 text-base max-w-xl mx-auto font-sans">
             Your privacy is our highest priority. Learn how our peer-to-peer architecture protects your conversations.
           </p>
         </div>
 
-        <div className="glass-card p-8 rounded-3xl border border-white/5 space-y-6 text-sm text-slate-300 leading-relaxed">
+        <div className="spidey2-card-white p-8 rounded-3xl border border-slate-200 space-y-6 text-sm text-slate-700 leading-relaxed font-sans shadow-lg">
           <section className="space-y-2">
-            <h2 className="text-xl font-bold font-outfit text-white flex items-center gap-2">
-              <ServerOff className="w-5 h-5 text-indigo-400" />
+            <h2 className="text-xl font-bold font-heading text-slate-900 flex items-center gap-2">
+              <ServerOff className="w-5 h-5 text-[#B8001C]" />
               1. WebRTC Peer-to-Peer Encryption
             </h2>
             <p>
@@ -29,8 +31,8 @@ export const Privacy: React.FC = () => {
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-xl font-bold font-outfit text-white flex items-center gap-2">
-              <Lock className="w-5 h-5 text-cyan-400" />
+            <h2 className="text-xl font-bold font-heading text-slate-900 flex items-center gap-2">
+              <Lock className="w-5 h-5 text-slate-900" />
               2. Ephemeral Session Data
             </h2>
             <p>
@@ -39,8 +41,8 @@ export const Privacy: React.FC = () => {
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-xl font-bold font-outfit text-white flex items-center gap-2">
-              <Cpu className="w-5 h-5 text-emerald-400" />
+            <h2 className="text-xl font-bold font-heading text-slate-900 flex items-center gap-2">
+              <Cpu className="w-5 h-5 text-[#B8001C]" />
               3. Browser Permissions
             </h2>
             <p>

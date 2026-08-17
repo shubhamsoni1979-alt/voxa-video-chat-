@@ -151,12 +151,38 @@ export function useMatchmaking() {
     }
   }, [partnerSocketId, currentRoomId, blockPartner]);
 
+  const [chatMessages, setChatMessages] = useState<Array<{ id: string; sender: 'self' | 'peer' | 'system'; text: string; timestamp: string }>>([]);
+
+  const sendMessage = useCallback((text: string) => {
+    if (!text.trim() || !currentRoomId) return;
+
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const msgId = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+
+    const newMsg = {
+      id: msgId,
+      sender: 'self' as const,
+      text: text.trim(),
+      timestamp: timeStr
+    };
+
+    setChatMessages((prev) => [...prev, newMsg]);
+
+    socket.emit('chat_message', {
+      roomId: currentRoomId,
+      text: text.trim(),
+      id: msgId,
+      timestamp: Date.now()
+    });
+  }, [currentRoomId, socket]);
+
   // Handle Socket.IO Event subscriptions
   useEffect(() => {
     const handleSearchingStatus = (data: { searching: boolean; message: string }) => {
       if (data.searching) {
         setConnectionState('searching');
         setStatusMessage(data.message || 'Searching for your next conversation...');
+        setChatMessages([]);
       }
     };
 
@@ -164,6 +190,14 @@ export function useMatchmaking() {
       matchDataRef.current = data;
       setPartnerSocketId(data.partnerSocketId);
       setCurrentRoomId(data.roomId);
+      setChatMessages([
+        {
+          id: `sys-${Date.now()}`,
+          sender: 'system',
+          text: 'Connected with a stranger! Say hi! 👋',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }
+      ]);
 
       setConnectionState('matched');
       setStatusMessage("Someone's here! Connecting video...");
@@ -172,6 +206,19 @@ export function useMatchmaking() {
         setConnectionState('connecting');
         await initPeerConnection(data.roomId, data.isPolite, localStream);
       }
+    };
+
+    const handleChatMessage = (data: { text: string; id: string; timestamp: number }) => {
+      const timeStr = new Date(data.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: data.id || `${Date.now()}`,
+          sender: 'peer',
+          text: data.text,
+          timestamp: timeStr
+        }
+      ]);
     };
 
     const handlePeerDisconnected = (data: { reason: string }) => {
@@ -190,12 +237,14 @@ export function useMatchmaking() {
 
     socket.on('searching_status', handleSearchingStatus);
     socket.on('match_found', handleMatchFound);
+    socket.on('chat_message', handleChatMessage);
     socket.on('peer_disconnected', handlePeerDisconnected);
     socket.on('error_message', handleErrorMessage);
 
     return () => {
       socket.off('searching_status', handleSearchingStatus);
       socket.off('match_found', handleMatchFound);
+      socket.off('chat_message', handleChatMessage);
       socket.off('peer_disconnected', handlePeerDisconnected);
       socket.off('error_message', handleErrorMessage);
     };
@@ -214,6 +263,8 @@ export function useMatchmaking() {
     peerMediaState,
     isReportModalOpen,
     toastMessage,
+    chatMessages,
+    sendMessage,
     setIsReportModalOpen,
     startMatchmaking,
     nextMatch,

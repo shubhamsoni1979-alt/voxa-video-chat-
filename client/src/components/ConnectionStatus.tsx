@@ -2,13 +2,28 @@ import React from 'react';
 import { ConnectionState } from '../types';
 import { Loader2, Wifi, WifiOff } from 'lucide-react';
 
+import { useSocketStatus } from '../hooks/useSocketStatus';
+
 interface ConnectionStatusProps {
   state: ConnectionState;
   message?: string;
 }
 
 export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({ state, message }) => {
+  const { isConnected: isBackendConnected } = useSocketStatus();
+
   const getStatusConfig = () => {
+    if (!isBackendConnected) {
+      return {
+        label: 'SERVER DISCONNECTED',
+        subtext: 'Reconnecting to backend server...',
+        badgeBg: 'bg-rose-500/20 text-rose-300 border-rose-500/40',
+        dotColor: 'bg-rose-500 shadow-[0_0_8px_#f43f5e] animate-pulse',
+        icon: WifiOff,
+        spin: false
+      };
+    }
+
     switch (state) {
       case 'searching':
         return {

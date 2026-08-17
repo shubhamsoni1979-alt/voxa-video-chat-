@@ -23,13 +23,13 @@ export const RemoteVideo: React.FC<RemoteVideoProps> = ({ stream, peerMediaState
   return (
     <div className="relative w-full h-full bg-[#080C14] flex items-center justify-center overflow-hidden rounded-3xl border border-white/5 shadow-2xl">
       
-      {/* Remote Video Element */}
+      {/* Remote Video Element - Mirrored Stream for natural mirror display */}
       {stream && (
         <video
           ref={videoRef}
           autoPlay
           playsInline
-          className={`w-full h-full object-cover transition-opacity duration-300 ${
+          className={`w-full h-full object-cover transform -scale-x-100 transition-opacity duration-300 ${
             isCameraDisabled ? 'opacity-0' : 'opacity-100'
           }`}
         />

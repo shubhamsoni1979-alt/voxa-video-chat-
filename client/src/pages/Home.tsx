@@ -1,18 +1,25 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
+import { MarqueeBanner } from '../components/MarqueeBanner';
 import { Hero } from '../components/Hero';
 import { HowItWorks } from '../components/HowItWorks';
 import { TrustSafety } from '../components/TrustSafety';
 import { SafetyNoticeModal } from '../components/SafetyNoticeModal';
 import { Footer } from '../components/Footer';
+import { useAuth } from '../context/AuthContext';
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
+  const { isLoggedIn, openLoginModal } = useAuth();
   const [isSafetyModalOpen, setIsSafetyModalOpen] = useState(false);
 
   const handleStartRequest = () => {
-    setIsSafetyModalOpen(true);
+    if (!isLoggedIn) {
+      openLoginModal('/chat');
+    } else {
+      setIsSafetyModalOpen(true);
+    }
   };
 
   const handleConfirmSafety = () => {
@@ -28,8 +35,9 @@ export const Home: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0B0F17]">
+    <div className="min-h-screen flex flex-col bg-white">
       <Navbar onStartClick={handleStartRequest} />
+      <MarqueeBanner />
       
       <main className="flex-grow">
         <Hero onStartClick={handleStartRequest} onHowItWorksClick={scrollToHowItWorks} />

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { 
   Mic, 
   MicOff, 
@@ -9,7 +10,7 @@ import {
   Minimize, 
   FastForward, 
   PhoneOff, 
-  Flag 
+  Flag
 } from 'lucide-react';
 
 interface VideoControlsProps {
@@ -54,88 +55,102 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto glass-dock rounded-3xl p-3 sm:p-4 flex items-center justify-between shadow-2xl border border-white/10">
+    <div className="w-full max-w-3xl mx-auto glass-dock p-3 sm:p-4 flex items-center justify-between shadow-2xl border border-white/10 rounded-2xl">
       
       {/* Left Media Controls */}
       <div className="flex items-center space-x-2 sm:space-x-3">
         {/* Microphone Toggle */}
-        <button
+        <motion.button
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.92 }}
           onClick={onToggleMicrophone}
           aria-label={micOn ? "Mute microphone" : "Unmute microphone"}
-          className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+          className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-rose-500 ${
             micOn
               ? 'bg-slate-800/90 text-slate-100 hover:bg-slate-700'
               : 'bg-rose-500/20 text-rose-400 border border-rose-500/40 hover:bg-rose-500/30'
           }`}
         >
           {micOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
-        </button>
+        </motion.button>
 
         {/* Camera Toggle */}
-        <button
+        <motion.button
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.92 }}
           onClick={onToggleCamera}
           aria-label={cameraOn ? "Turn off camera" : "Turn on camera"}
-          className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+          className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-rose-500 ${
             cameraOn
               ? 'bg-slate-800/90 text-slate-100 hover:bg-slate-700'
               : 'bg-rose-500/20 text-rose-400 border border-rose-500/40 hover:bg-rose-500/30'
           }`}
         >
           {cameraOn ? <VideoIcon className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
-        </button>
+        </motion.button>
 
         {/* Flip Camera (Mobile Friendly) */}
-        <button
+        <motion.button
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.92 }}
           onClick={onFlipCamera}
           aria-label="Flip camera"
-          className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-slate-800/90 text-slate-300 hover:bg-slate-700 flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="hidden sm:flex w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-slate-800/90 text-slate-300 hover:bg-slate-700 items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-rose-500"
         >
           <RefreshCw className="w-5 h-5" />
-        </button>
+        </motion.button>
 
         {/* Fullscreen Toggle */}
-        <button
+        <motion.button
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.92 }}
           onClick={toggleFullscreen}
           aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-          className="hidden sm:flex w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-slate-800/90 text-slate-300 hover:bg-slate-700 items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="hidden md:flex w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-slate-800/90 text-slate-300 hover:bg-slate-700 items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-rose-500"
         >
           {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
-        </button>
+        </motion.button>
       </div>
 
       {/* Center Primary Action: NEXT */}
       <div className="flex-1 px-3 sm:px-6 flex justify-center">
-        <button
+        <motion.button
+          whileHover={{ scale: 1.04 }}
+          whileTap={{ scale: 0.95 }}
           onClick={onNext}
           aria-label="Next user"
-          className="w-full max-w-[200px] gradient-brand-button text-white text-base sm:text-lg font-bold py-3 px-6 rounded-2xl flex items-center justify-center space-x-2 shadow-lg shadow-indigo-600/30 hover:scale-[1.03] active:scale-95 transition-all duration-200"
+          className="w-full max-w-[200px] spidey2-btn-red text-white text-base sm:text-lg font-bold py-3 px-6 rounded-2xl flex items-center justify-center space-x-2 shadow-lg transition-all duration-200 font-heading"
         >
           <span>NEXT</span>
           <FastForward className="w-5 h-5" />
-        </button>
+        </motion.button>
       </div>
 
       {/* Right Actions: Report & End */}
       <div className="flex items-center space-x-2 sm:space-x-3">
         {/* Report Button */}
-        <button
+        <motion.button
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.92 }}
           onClick={onReport}
           aria-label="Report or block user"
           title="Report / Block"
-          className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-slate-800/90 text-amber-400 hover:bg-amber-500/20 hover:border-amber-500/30 border border-transparent flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-slate-800/90 text-amber-400 hover:bg-amber-500/20 border border-transparent flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
         >
           <Flag className="w-5 h-5" />
-        </button>
+        </motion.button>
 
         {/* End Call Button */}
-        <button
+        <motion.button
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.92 }}
           onClick={onEnd}
           aria-label="End call"
           title="End conversation"
           className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-rose-600 text-white hover:bg-rose-700 flex items-center justify-center transition-all duration-200 shadow-md shadow-rose-600/20 focus:outline-none focus:ring-2 focus:ring-rose-500"
         >
           <PhoneOff className="w-5 h-5" />
-        </button>
+        </motion.button>
       </div>
 
     </div>
