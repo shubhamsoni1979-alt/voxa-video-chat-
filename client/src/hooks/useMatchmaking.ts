@@ -128,7 +128,8 @@ export function useMatchmaking() {
     if (!partnerSocketId) return;
 
     try {
-      const response = await fetch('/api/reports', {
+      const serverUrl = import.meta.env.VITE_SERVER_URL || '';
+      const response = await fetch(`${serverUrl}/api/reports`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

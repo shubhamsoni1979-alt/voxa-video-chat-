@@ -4,8 +4,8 @@ let socketInstance: Socket | null = null;
 
 export const getSocket = (): Socket => {
   if (!socketInstance) {
-    // In production or dev environment
-    socketInstance = io(window.location.origin, {
+    const serverUrl = import.meta.env.VITE_SERVER_URL || window.location.origin;
+    socketInstance = io(serverUrl, {
       transports: ['websocket', 'polling'],
       autoConnect: false,
       reconnectionAttempts: 10,
