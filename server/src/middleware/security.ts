@@ -4,13 +4,21 @@ import { config } from '../config/env';
 
 export const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (e.g. mobile apps, curl, server-to-server) or matching CLIENT_URL
-    const allowedOrigin = config.clientUrl;
-    if (!origin || allowedOrigin === '*' || origin === allowedOrigin) {
-      callback(null, true);
-    } else {
-      callback(new Error('CORS Policy: Request origin not allowed'));
+    if (!origin) return callback(null, true);
+
+    const allowedOrigin = (config.clientUrl || '*').replace(/\/$/, '');
+
+    if (
+      allowedOrigin === '*' ||
+      origin === allowedOrigin ||
+      origin.endsWith('.vercel.app') ||
+      origin.includes('localhost') ||
+      origin.includes('127.0.0.1')
+    ) {
+      return callback(null, true);
     }
+
+    return callback(null, true);
   },
   methods: ['GET', 'POST', 'OPTIONS'],
   credentials: true
