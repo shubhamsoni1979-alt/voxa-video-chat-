@@ -7,11 +7,12 @@ export const getSocket = (): Socket => {
   if (!socketInstance) {
     const serverUrl = API_URL || window.location.origin;
     socketInstance = io(serverUrl, {
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'],
       autoConnect: true,
-      reconnectionAttempts: 20,
+      reconnectionAttempts: 50,
       reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000
+      reconnectionDelayMax: 5000,
+      withCredentials: true
     });
   }
   return socketInstance;

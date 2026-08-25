@@ -26,13 +26,17 @@ export function useSocketStatus() {
     socket.on('disconnect', handleDisconnect);
     socket.on('connect_error', handleConnectError);
 
-    // Ensure connection is initiated
     if (!socket.connected) {
       socket.connect();
     }
     setIsConnected(socket.connected);
 
+    const interval = setInterval(() => {
+      setIsConnected(socket.connected);
+    }, 1000);
+
     return () => {
+      clearInterval(interval);
       socket.off('connect', handleConnect);
       socket.off('disconnect', handleDisconnect);
       socket.off('connect_error', handleConnectError);
