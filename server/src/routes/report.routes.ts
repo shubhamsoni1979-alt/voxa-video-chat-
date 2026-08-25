@@ -1,10 +1,10 @@
 import { Router, Request, Response } from 'express';
 import { reportRateLimiter } from '../middleware/rateLimiter';
 import { logger } from '../utils/logger';
+import { config } from '../config/env';
 
 const router = Router();
 
-// In-memory reports store for MVP
 interface ReportRecord {
   id: string;
   reporterIp: string;
@@ -17,9 +17,23 @@ interface ReportRecord {
 
 const reports: ReportRecord[] = [];
 
+// Helper to sanitize strings
+function sanitizeString(str: any, maxLen = 300): string {
+  if (typeof str !== 'string') return '';
+  return str.trim().slice(0, maxLen).replace(/[<>]/g, '');
+}
+
 router.post('/reports', reportRateLimiter, (req: Request, res: Response) => {
   try {
-    const { reportedSocketId, roomId, reason, details } = req.body;
+    const rawReportedSocketId = req.body?.reportedSocketId;
+    const rawRoomId = req.body?.roomId;
+    const rawReason = req.body?.reason;
+    const rawDetails = req.body?.details;
+
+    const reportedSocketId = sanitizeString(rawReportedSocketId, 100);
+    const roomId = sanitizeString(rawRoomId, 100);
+    const reason = sanitizeString(rawReason, 100);
+    const details = sanitizeString(rawDetails, 500);
 
     if (!reportedSocketId || !reason) {
       return res.status(400).json({ error: 'Missing required report fields (reportedSocketId, reason)' });
@@ -31,7 +45,7 @@ router.post('/reports', reportRateLimiter, (req: Request, res: Response) => {
       reportedSocketId,
       roomId: roomId || 'none',
       reason,
-      details: details || '',
+      details,
       timestamp: new Date().toISOString()
     };
 
@@ -46,6 +60,9 @@ router.post('/reports', reportRateLimiter, (req: Request, res: Response) => {
 });
 
 router.get('/reports/count', (req: Request, res: Response) => {
+  if (config.nodeEnv === 'production') {
+    return res.status(403).json({ error: 'Access denied.' });
+  }
   res.json({ totalReports: reports.length });
 });
 

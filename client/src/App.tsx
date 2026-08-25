@@ -5,6 +5,8 @@ import { Home } from './pages/Home';
 import { VideoChat } from './pages/VideoChat';
 import { Safety } from './pages/Safety';
 import { Privacy } from './pages/Privacy';
+import { Terms } from './pages/Terms';
+import { NotFound } from './pages/NotFound';
 
 const ProtectedVideoChatRoute: React.FC = () => {
   const { isLoggedIn, openLoginModal } = useAuth();
@@ -29,7 +31,8 @@ export const App: React.FC = () => {
           <Route path="/chat" element={<ProtectedVideoChatRoute />} />
           <Route path="/safety" element={<Safety />} />
           <Route path="/privacy" element={<Privacy />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
     </AuthProvider>

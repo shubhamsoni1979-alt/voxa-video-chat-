@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMatchmaking } from '../hooks/useMatchmaking';
 import { RemoteVideo } from '../components/RemoteVideo';
@@ -15,6 +15,7 @@ import { ArrowLeft, ShieldCheck } from 'lucide-react';
 export const VideoChat: React.FC = () => {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
 
   const {
     connectionState,
@@ -159,7 +160,7 @@ export const VideoChat: React.FC = () => {
 
         </div>
 
-        {/* Right Side: PERMANENT & STATIC Text Chat Panel */}
+        {/* Right Side: PERMANENT & STATIC Text Chat Panel (Desktop) */}
         <div className="hidden md:flex w-[350px] lg:w-[380px] shrink-0 h-full z-20">
           <ChatPanel
             messages={chatMessages}
@@ -169,6 +170,27 @@ export const VideoChat: React.FC = () => {
         </div>
 
       </main>
+
+      {/* Mobile Chat Modal Drawer */}
+      {isMobileChatOpen && (
+        <div className="md:hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col justify-end">
+          <div className="w-full h-[80vh] bg-slate-900 rounded-t-3xl p-4 flex flex-col relative border-t border-white/10">
+            <button
+              onClick={() => setIsMobileChatOpen(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white p-2 rounded-full bg-white/10"
+            >
+              ✕
+            </button>
+            <div className="flex-1 min-h-0 pt-6">
+              <ChatPanel
+                messages={chatMessages}
+                onSendMessage={sendMessage}
+                isConnected={isConnected}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Controls Bar */}
       <footer className="z-20 w-full p-3 sm:p-5 shrink-0">
@@ -181,6 +203,7 @@ export const VideoChat: React.FC = () => {
           onNext={nextMatch}
           onEnd={handleExit}
           onReport={() => setIsReportModalOpen(true)}
+          onToggleMobileChat={() => setIsMobileChatOpen(!isMobileChatOpen)}
           containerRef={containerRef}
         />
       </footer>
