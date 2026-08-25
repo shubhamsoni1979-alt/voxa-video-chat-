@@ -1,4 +1,7 @@
+export const API_URL = (import.meta.env.VITE_API_URL || import.meta.env.VITE_SERVER_URL || '').replace(/\/$/, '');
+
 export const config = {
+  apiUrl: API_URL,
   stunServer: import.meta.env.VITE_STUN_SERVER || 'stun:stun.l.google.com:19302',
   turnServer: import.meta.env.VITE_TURN_SERVER || '',
   turnUsername: import.meta.env.VITE_TURN_USERNAME || '',

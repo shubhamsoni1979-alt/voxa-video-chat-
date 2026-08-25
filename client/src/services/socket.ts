@@ -1,10 +1,11 @@
 import { io, Socket } from 'socket.io-client';
+import { API_URL } from '../utils/config';
 
 let socketInstance: Socket | null = null;
 
 export const getSocket = (): Socket => {
   if (!socketInstance) {
-    const serverUrl = import.meta.env.VITE_SERVER_URL || window.location.origin;
+    const serverUrl = API_URL || window.location.origin;
     socketInstance = io(serverUrl, {
       transports: ['websocket', 'polling'],
       autoConnect: true,

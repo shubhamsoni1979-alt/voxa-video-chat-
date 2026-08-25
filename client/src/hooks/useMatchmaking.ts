@@ -3,6 +3,7 @@ import { getSocket } from '../services/socket';
 import { useMediaStream } from './useMediaStream';
 import { useWebRTC } from './useWebRTC';
 import { ConnectionState, MatchData, UserReportData } from '../types';
+import { API_URL } from '../utils/config';
 
 export function useMatchmaking() {
   const [connectionState, setConnectionState] = useState<ConnectionState>('idle');
@@ -128,8 +129,7 @@ export function useMatchmaking() {
     if (!partnerSocketId) return;
 
     try {
-      const serverUrl = import.meta.env.VITE_SERVER_URL || '';
-      const response = await fetch(`${serverUrl}/api/reports`, {
+      const response = await fetch(`${API_URL}/api/reports`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
