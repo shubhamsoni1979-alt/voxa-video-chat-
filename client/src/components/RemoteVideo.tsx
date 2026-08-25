@@ -14,6 +14,9 @@ export const RemoteVideo: React.FC<RemoteVideoProps> = ({ stream, peerMediaState
   useEffect(() => {
     if (videoRef.current && stream) {
       videoRef.current.srcObject = stream;
+      videoRef.current.play().catch((err) => {
+        console.warn('Remote video autoplay prevented by browser:', err);
+      });
     }
   }, [stream]);
 

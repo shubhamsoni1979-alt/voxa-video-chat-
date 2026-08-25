@@ -76,6 +76,7 @@ export function useWebRTC(): UseWebRTCReturn {
         remoteStreamInstance.addTrack(track);
       });
       setRemoteStream(new MediaStream(remoteStreamInstance.getTracks()));
+      setConnectionState('connected');
     };
 
     // 3. ICE candidate trickling
@@ -88,15 +89,32 @@ export function useWebRTC(): UseWebRTCReturn {
       }
     };
 
-    // 4. Connection state updates
-    pc.onconnectionstatechange = () => {
-      if (peerConnectionRef.current === pc) {
-        setConnectionState(pc.connectionState);
+    // 4. Combined connection state updates for cross-platform/mobile compatibility
+    const updateCombinedState = () => {
+      if (peerConnectionRef.current !== pc) return;
+
+      const connState = pc.connectionState;
+      const iceState = pc.iceConnectionState;
+
+      if (connState === 'connected' || iceState === 'connected' || iceState === 'completed') {
+        setConnectionState('connected');
+      } else if (connState === 'connecting' || iceState === 'checking') {
+        setConnectionState('connecting');
+      } else if (connState === 'failed' || iceState === 'failed') {
+        setConnectionState('failed');
+      } else if (connState === 'disconnected' || iceState === 'disconnected') {
+        setConnectionState('disconnected');
+      } else {
+        setConnectionState(connState);
       }
     };
 
+    pc.onconnectionstatechange = updateCombinedState;
+
     // ICE Connection State & Recovery
     pc.oniceconnectionstatechange = () => {
+      updateCombinedState();
+
       if (peerConnectionRef.current !== pc) return;
       const state = pc.iceConnectionState;
       if (state === 'failed') {
