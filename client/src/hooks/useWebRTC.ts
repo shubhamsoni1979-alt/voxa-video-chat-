@@ -95,6 +95,26 @@ export function useWebRTC(): UseWebRTCReturn {
       }
     };
 
+    // ICE Connection State & Recovery
+    pc.oniceconnectionstatechange = () => {
+      if (peerConnectionRef.current !== pc) return;
+      const state = pc.iceConnectionState;
+      if (state === 'failed') {
+        console.warn('ICE connection failed across networks. Attempting ICE restart...');
+        if ('restartIce' in pc && typeof (pc as any).restartIce === 'function') {
+          (pc as any).restartIce();
+        } else {
+          pc.createOffer({ iceRestart: true }).then(offer => {
+            return pc.setLocalDescription(offer);
+          }).then(() => {
+            if (pc.localDescription && currentRoomIdRef.current === roomId) {
+              socket.emit('offer', { roomId, sdp: pc.localDescription });
+            }
+          }).catch(err => console.error('ICE restart failed:', err));
+        }
+      }
+    };
+
     // 5. WebRTC Perfect Negotiation - onnegotiationneeded
     pc.onnegotiationneeded = async () => {
       try {
@@ -131,7 +151,11 @@ export function useWebRTC(): UseWebRTCReturn {
         while (pendingCandidatesRef.current.length > 0) {
           const cand = pendingCandidatesRef.current.shift();
           if (cand) {
-            await pc.addIceCandidate(new RTCIceCandidate(cand));
+            try {
+              await pc.addIceCandidate(new RTCIceCandidate(cand));
+            } catch (candErr) {
+              console.warn('Error adding buffered candidate:', candErr);
+            }
           }
         }
 
@@ -156,7 +180,11 @@ export function useWebRTC(): UseWebRTCReturn {
         while (pendingCandidatesRef.current.length > 0) {
           const cand = pendingCandidatesRef.current.shift();
           if (cand) {
-            await pc.addIceCandidate(new RTCIceCandidate(cand));
+            try {
+              await pc.addIceCandidate(new RTCIceCandidate(cand));
+            } catch (candErr) {
+              console.warn('Error adding pending candidate:', candErr);
+            }
           }
         }
       } catch (err) {
@@ -189,23 +217,6 @@ export function useWebRTC(): UseWebRTCReturn {
     socket.off('answer').on('answer', handleAnswer);
     socket.off('ice_candidate').on('ice_candidate', handleIceCandidate);
     socket.off('peer_media_state').on('peer_media_state', handlePeerMediaState);
-
-    // Initial offer kickstart if impolite peer
-    if (!isPolite) {
-      try {
-        isMakingOfferRef.current = true;
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        socket.emit('offer', {
-          roomId,
-          sdp: offer
-        });
-      } catch (err) {
-        console.error('Error creating initial offer:', err);
-      } finally {
-        isMakingOfferRef.current = false;
-      }
-    }
   }, [socket, closePeerConnection]);
 
   useEffect(() => {

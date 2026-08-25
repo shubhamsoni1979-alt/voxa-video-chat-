@@ -49,7 +49,11 @@ export const RemoteVideo: React.FC<RemoteVideoProps> = ({ stream, peerMediaState
             )}
           </div>
           <span className="text-slate-400 text-sm font-medium">
-            {isCameraDisabled ? "Partner turned off camera" : "Remote stream active"}
+            {!isConnected 
+              ? "Connecting media..." 
+              : isCameraDisabled 
+                ? "Partner turned off camera" 
+                : "Waiting for partner video stream..."}
           </span>
         </div>
       )}
