@@ -15,87 +15,69 @@ const DEFAULT_STUN_SERVERS: IceServer[] = [
   { urls: 'stun:stun2.l.google.com:19302' }
 ];
 
+// Default fallback Metered TURN configuration
+const DEFAULT_METERED_APP_NAME = 'shubhamsoni979';
+const DEFAULT_METERED_API_KEY = 'FE0O3raJKACKUl4g08pNkACwVFSCtslK8DqjVOPRytywxuV8';
+
 // In-memory cache for Metered credentials
 let cachedMeteredResponse: { iceServers: IceServer[]; expiresAt: number } | null = null;
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 router.get('/ice', async (_req: Request, res: Response) => {
   try {
-    const iceServers: IceServer[] = [...DEFAULT_STUN_SERVERS];
-    let hasTurn = false;
+    const meteredAppName = config.meteredAppName || DEFAULT_METERED_APP_NAME;
+    const meteredApiKey = config.meteredApiKey || DEFAULT_METERED_API_KEY;
 
-    // 1. Prefer Metered TURN credentials when configured
-    if (config.meteredApiKey && config.meteredAppName) {
-      const now = Date.now();
-      if (cachedMeteredResponse && cachedMeteredResponse.expiresAt > now) {
-        return res.json({
-          iceServers: [...DEFAULT_STUN_SERVERS, ...cachedMeteredResponse.iceServers],
-          hasTurn: true
-        });
-      }
-
-      // Try fetching dynamically via apiKey or secretKey
-      try {
-        const meteredUrl = `https://${config.meteredAppName}.metered.live/api/v1/turn/credentials?secretKey=${config.meteredApiKey}&apiKey=${config.meteredApiKey}`;
-        const response = await fetch(meteredUrl);
-        if (response.ok) {
-          const meteredServers = (await response.json()) as IceServer[];
-          if (Array.isArray(meteredServers) && meteredServers.length > 0) {
-            cachedMeteredResponse = {
-              iceServers: meteredServers,
-              expiresAt: now + CACHE_TTL_MS
-            };
-            return res.json({
-              iceServers: [...DEFAULT_STUN_SERVERS, ...meteredServers],
-              hasTurn: true
-            });
-          }
-        }
-      } catch (err) {
-        console.warn('[Voxa Server] Error fetching credentials from Metered API:', (err as Error).message);
-      }
-
-      // Fallback: Construct standard Metered TURN server candidate set using domain & key
-      const fallbackMeteredServers: IceServer[] = [
-        {
-          urls: [
-            `turn:${config.meteredAppName}.metered.live:80`,
-            `turn:${config.meteredAppName}.metered.live:443`,
-            `turn:${config.meteredAppName}.metered.live:443?transport=tcp`
-          ],
-          username: config.meteredAppName,
-          credential: config.meteredApiKey
-        }
-      ];
-      cachedMeteredResponse = {
-        iceServers: fallbackMeteredServers,
-        expiresAt: now + CACHE_TTL_MS
-      };
+    const now = Date.now();
+    if (cachedMeteredResponse && cachedMeteredResponse.expiresAt > now) {
       return res.json({
-        iceServers: [...DEFAULT_STUN_SERVERS, ...fallbackMeteredServers],
+        iceServers: [...DEFAULT_STUN_SERVERS, ...cachedMeteredResponse.iceServers],
         hasTurn: true
       });
     }
 
-    // 2. Static TURN configuration fallback
-    if (config.turnUrls && config.turnUsername && config.turnCredential) {
-      const turnUrlsArray = config.turnUrls.includes(',')
-        ? config.turnUrls.split(',').map((url) => url.trim()).filter(Boolean)
-        : [config.turnUrls.trim()];
-
-      if (turnUrlsArray.length > 0) {
-        iceServers.push({
-          urls: turnUrlsArray,
-          username: config.turnUsername,
-          credential: config.turnCredential
-        });
-        hasTurn = true;
+    // Try fetching dynamically from Metered API
+    try {
+      const meteredUrl = `https://${meteredAppName}.metered.live/api/v1/turn/credentials?secretKey=${meteredApiKey}&apiKey=${meteredApiKey}`;
+      const response = await fetch(meteredUrl);
+      if (response.ok) {
+        const meteredServers = (await response.json()) as IceServer[];
+        if (Array.isArray(meteredServers) && meteredServers.length > 0) {
+          cachedMeteredResponse = {
+            iceServers: meteredServers,
+            expiresAt: now + CACHE_TTL_MS
+          };
+          return res.json({
+            iceServers: [...DEFAULT_STUN_SERVERS, ...meteredServers],
+            hasTurn: true
+          });
+        }
       }
+    } catch (err) {
+      console.warn('[Voxa Server] Error fetching credentials from Metered API:', (err as Error).message);
     }
 
+    // Construct standard Metered TURN server candidate set
+    const fallbackMeteredServers: IceServer[] = [
+      {
+        urls: [
+          `turn:${meteredAppName}.metered.live:80`,
+          `turn:${meteredAppName}.metered.live:443`,
+          `turn:${meteredAppName}.metered.live:443?transport=tcp`
+        ],
+        username: meteredAppName,
+        credential: meteredApiKey
+      }
+    ];
+
+    cachedMeteredResponse = {
+      iceServers: fallbackMeteredServers,
+      expiresAt: now + CACHE_TTL_MS
+    };
+
     return res.json({
-      iceServers,
-      hasTurn
+      iceServers: [...DEFAULT_STUN_SERVERS, ...fallbackMeteredServers],
+      hasTurn: true
     });
   } catch (error) {
     console.error('[Voxa Server] ICE route internal error:', error);

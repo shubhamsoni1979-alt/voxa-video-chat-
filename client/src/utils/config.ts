@@ -61,7 +61,7 @@ export const getIceServers = async (): Promise<IceConfigResult> => {
     const response = await fetch(`${API_URL}/api/ice`);
     if (response.ok) {
       const data = await response.json();
-      if (data && Array.isArray(data.iceServers) && data.iceServers.length > 0) {
+      if (data && Array.isArray(data.iceServers) && data.iceServers.length > 0 && data.hasTurn) {
         const result: IceConfigResult = {
           iceServers: data.iceServers,
           hasTurn: Boolean(data.hasTurn)
@@ -70,14 +70,26 @@ export const getIceServers = async (): Promise<IceConfigResult> => {
         return result;
       }
     }
-    console.warn('[Voxa Client] /api/ice returned non-ok or invalid response, falling back to STUN-only.');
   } catch (err) {
-    console.warn('[Voxa Client] Failed to fetch /api/ice from backend, falling back to STUN-only:', err);
+    console.warn('[Voxa Client] Failed to fetch /api/ice from backend:', err);
   }
 
+  // Resilient Client Fallback: Metered TURN Servers
   const fallbackResult: IceConfigResult = {
-    iceServers: DEFAULT_STUN_SERVERS,
-    hasTurn: false
+    iceServers: [
+      ...DEFAULT_STUN_SERVERS,
+      {
+        urls: [
+          'turn:shubhamsoni979.metered.live:80',
+          'turn:shubhamsoni979.metered.live:443',
+          'turn:shubhamsoni979.metered.live:443?transport=tcp'
+        ],
+        username: 'shubhamsoni979',
+        credential: 'FE0O3raJKACKUl4g08pNkACwVFSCtslK8DqjVOPRytywxuV8'
+      }
+    ],
+    hasTurn: true
   };
+  cachedIceResult = { result: fallbackResult, expiresAt: now + CLIENT_CACHE_TTL_MS };
   return fallbackResult;
 };
