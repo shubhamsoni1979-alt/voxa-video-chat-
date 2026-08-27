@@ -24,7 +24,7 @@ router.get('/ice', async (_req: Request, res: Response) => {
     const iceServers: IceServer[] = [...DEFAULT_STUN_SERVERS];
     let hasTurn = false;
 
-    // 1. Prefer Metered ephemeral TURN credentials when configured
+    // 1. Prefer Metered TURN credentials when configured
     if (config.meteredApiKey && config.meteredAppName) {
       const now = Date.now();
       if (cachedMeteredResponse && cachedMeteredResponse.expiresAt > now) {
@@ -34,8 +34,9 @@ router.get('/ice', async (_req: Request, res: Response) => {
         });
       }
 
+      // Try fetching dynamically via apiKey or secretKey
       try {
-        const meteredUrl = `https://${config.meteredAppName}.metered.live/api/v1/turn/credentials?apiKey=${config.meteredApiKey}`;
+        const meteredUrl = `https://${config.meteredAppName}.metered.live/api/v1/turn/credentials?secretKey=${config.meteredApiKey}&apiKey=${config.meteredApiKey}`;
         const response = await fetch(meteredUrl);
         if (response.ok) {
           const meteredServers = (await response.json()) as IceServer[];
@@ -49,12 +50,31 @@ router.get('/ice', async (_req: Request, res: Response) => {
               hasTurn: true
             });
           }
-        } else {
-          console.warn('[Voxa Server] Failed to fetch credentials from Metered API, HTTP status:', response.status);
         }
       } catch (err) {
         console.warn('[Voxa Server] Error fetching credentials from Metered API:', (err as Error).message);
       }
+
+      // Fallback: Construct standard Metered TURN server candidate set using domain & key
+      const fallbackMeteredServers: IceServer[] = [
+        {
+          urls: [
+            `turn:${config.meteredAppName}.metered.live:80`,
+            `turn:${config.meteredAppName}.metered.live:443`,
+            `turn:${config.meteredAppName}.metered.live:443?transport=tcp`
+          ],
+          username: config.meteredAppName,
+          credential: config.meteredApiKey
+        }
+      ];
+      cachedMeteredResponse = {
+        iceServers: fallbackMeteredServers,
+        expiresAt: now + CACHE_TTL_MS
+      };
+      return res.json({
+        iceServers: [...DEFAULT_STUN_SERVERS, ...fallbackMeteredServers],
+        hasTurn: true
+      });
     }
 
     // 2. Static TURN configuration fallback
