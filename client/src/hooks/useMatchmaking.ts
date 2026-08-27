@@ -54,19 +54,29 @@ export function useMatchmaking() {
 
   // Sync WebRTC connection state to client state
   useEffect(() => {
+    let connectingTimer: ReturnType<typeof setTimeout> | null = null;
+
     if (rtcState === 'connected') {
       setConnectionState('connected');
       setStatusMessage('Connected');
     } else if (rtcState === 'connecting') {
       setConnectionState('connecting');
       setStatusMessage('Establishing video connection...');
+
+      connectingTimer = setTimeout(() => {
+        setStatusMessage('Connecting media... (Cross-network calls require TURN credentials in backend .env)');
+      }, 7000);
     } else if (rtcState === 'failed' || rtcState === 'disconnected') {
       if (connectionState === 'connected' || connectionState === 'connecting') {
         setConnectionState('partner_disconnected');
         setStatusMessage('Connection lost with partner.');
       }
     }
-  }, [rtcState]);
+
+    return () => {
+      if (connectingTimer) clearTimeout(connectingTimer);
+    };
+  }, [rtcState, connectionState]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
