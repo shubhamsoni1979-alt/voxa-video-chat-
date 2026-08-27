@@ -64,7 +64,7 @@ export function useMatchmaking() {
       setStatusMessage('Establishing video connection...');
 
       connectingTimer = setTimeout(() => {
-        setStatusMessage('Connecting media... (Cross-network calls require TURN credentials in backend .env)');
+        setStatusMessage('Establishing media connection...');
       }, 7000);
     } else if (rtcState === 'failed' || rtcState === 'disconnected') {
       if (connectionState === 'connected' || connectionState === 'connecting') {
