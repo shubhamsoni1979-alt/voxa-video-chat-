@@ -5,6 +5,7 @@ import { config } from './config/env';
 import { corsOptions, helmetMiddleware } from './middleware/security';
 import { apiRateLimiter } from './middleware/rateLimiter';
 import reportRoutes from './routes/report.routes';
+import iceRoutes from './routes/ice.routes';
 import { registerConnectionHandlers } from './sockets/connection.socket';
 import cors from 'cors';
 
@@ -18,6 +19,7 @@ app.use(express.json());
 // API Rate Limiting & Routes
 app.use('/api', apiRateLimiter);
 app.use('/api', reportRoutes);
+app.use('/api', iceRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

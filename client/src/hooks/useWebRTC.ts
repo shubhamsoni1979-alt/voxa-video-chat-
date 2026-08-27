@@ -23,13 +23,21 @@ export function useWebRTC(): UseWebRTCReturn {
   const isMakingOfferRef = useRef<boolean>(false);
   const isIgnoringOfferRef = useRef<boolean>(false);
   const currentRoomIdRef = useRef<string | null>(null);
+  const hasRelayCandidateRef = useRef<boolean>(false);
+  const restartCountRef = useRef<number>(0);
+  const disconnectedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const socket = getSocket();
 
   const closePeerConnection = useCallback(() => {
+    if (disconnectedTimerRef.current) {
+      clearTimeout(disconnectedTimerRef.current);
+      disconnectedTimerRef.current = null;
+    }
     if (peerConnectionRef.current) {
       peerConnectionRef.current.ontrack = null;
       peerConnectionRef.current.onicecandidate = null;
+      peerConnectionRef.current.onicecandidateerror = null;
       peerConnectionRef.current.onconnectionstatechange = null;
       peerConnectionRef.current.oniceconnectionstatechange = null;
       peerConnectionRef.current.close();
@@ -41,21 +49,77 @@ export function useWebRTC(): UseWebRTCReturn {
     isMakingOfferRef.current = false;
     isIgnoringOfferRef.current = false;
     currentRoomIdRef.current = null;
+    hasRelayCandidateRef.current = false;
+    restartCountRef.current = 0;
   }, []);
 
   const sendMediaState = useCallback((cameraOn: boolean, micOn: boolean) => {
     socket.emit('media_state', { cameraOn, micOn });
   }, [socket]);
 
+  const triggerIceRestart = useCallback(async () => {
+    if (isPoliteRef.current) return; // Only impolite peer initiates ICE restarts
+    if (restartCountRef.current >= 3) {
+      console.warn('[Voxa] Maximum ICE restart attempts reached (3).');
+      return;
+    }
+
+    const pc = peerConnectionRef.current;
+    const roomId = currentRoomIdRef.current;
+    if (!pc || !roomId) return;
+
+    restartCountRef.current += 1;
+    console.log(`[Voxa] Initiating controlled ICE restart (${restartCountRef.current}/3)...`);
+
+    try {
+      if ('restartIce' in pc && typeof (pc as any).restartIce === 'function') {
+        (pc as any).restartIce();
+      } else {
+        const offer = await pc.createOffer({ iceRestart: true });
+        await pc.setLocalDescription(offer);
+      }
+      if (pc.localDescription && currentRoomIdRef.current === roomId) {
+        socket.emit('offer', { roomId, sdp: pc.localDescription });
+      }
+    } catch (err) {
+      console.error('[Voxa] Controlled ICE restart failed:', err);
+    }
+  }, [socket]);
+
+  const logCandidatePairStats = async (pc: RTCPeerConnection) => {
+    try {
+      const stats = await pc.getStats();
+      stats.forEach((report) => {
+        if (report.type === 'candidate-pair' && report.state === 'succeeded') {
+          const localCandidate = stats.get(report.localCandidateId);
+          const remoteCandidate = stats.get(report.remoteCandidateId);
+          if (localCandidate && remoteCandidate) {
+            console.log(
+              `[Voxa] Connected via ${localCandidate.candidateType} <-> ${remoteCandidate.candidateType} (${localCandidate.protocol})`
+            );
+          }
+        }
+      });
+    } catch {
+      // Diagnostic fail silent
+    }
+  };
+
   const initPeerConnection = useCallback(async (roomId: string, isPolite: boolean, localStream: MediaStream) => {
     closePeerConnection();
 
     currentRoomIdRef.current = roomId;
     isPoliteRef.current = isPolite;
+    hasRelayCandidateRef.current = false;
+    restartCountRef.current = 0;
+
+    const { iceServers, hasTurn } = await getIceServers();
 
     const pc = new RTCPeerConnection({
-      iceServers: getIceServers(),
-      iceCandidatePoolSize: 10
+      iceServers,
+      iceCandidatePoolSize: 0,
+      bundlePolicy: 'max-bundle',
+      rtcpMuxPolicy: 'require'
     });
 
     peerConnectionRef.current = pc;
@@ -79,13 +143,30 @@ export function useWebRTC(): UseWebRTCReturn {
       setConnectionState('connected');
     };
 
-    // 3. ICE candidate trickling
+    // 3. ICE candidate trickling & relay candidate detection
     pc.onicecandidate = (event) => {
-      if (event.candidate && currentRoomIdRef.current === roomId) {
-        socket.emit('ice_candidate', {
-          roomId,
-          candidate: event.candidate.toJSON()
-        });
+      if (event.candidate) {
+        if (event.candidate.type === 'relay' || (event.candidate.candidate && event.candidate.candidate.includes('typ relay'))) {
+          hasRelayCandidateRef.current = true;
+        }
+        if (currentRoomIdRef.current === roomId) {
+          socket.emit('ice_candidate', {
+            roomId,
+            candidate: event.candidate.toJSON()
+          });
+        }
+      } else {
+        // ICE gathering finished
+        if (!hasRelayCandidateRef.current && hasTurn) {
+          console.warn('[Voxa] ICE gathering finished with NO relay candidate. Check TURN server configuration.');
+        }
+      }
+    };
+
+    // ICE candidate error diagnostics
+    pc.onicecandidateerror = (event: any) => {
+      if (event.errorCode >= 400 && event.errorCode <= 499) {
+        console.error(`[Voxa] ICE server authentication error ${event.errorCode}: ${event.errorText} (${event.url})`);
       }
     };
 
@@ -97,41 +178,42 @@ export function useWebRTC(): UseWebRTCReturn {
       const iceState = pc.iceConnectionState;
 
       if (connState === 'connected' || iceState === 'connected' || iceState === 'completed') {
+        if (disconnectedTimerRef.current) {
+          clearTimeout(disconnectedTimerRef.current);
+          disconnectedTimerRef.current = null;
+        }
         setConnectionState('connected');
+        logCandidatePairStats(pc);
       } else if (connState === 'connecting' || iceState === 'checking') {
         setConnectionState('connecting');
       } else if (connState === 'failed' || iceState === 'failed') {
+        if (disconnectedTimerRef.current) {
+          clearTimeout(disconnectedTimerRef.current);
+          disconnectedTimerRef.current = null;
+        }
         setConnectionState('failed');
+        triggerIceRestart();
       } else if (connState === 'disconnected' || iceState === 'disconnected') {
         setConnectionState('disconnected');
+        if (!disconnectedTimerRef.current) {
+          disconnectedTimerRef.current = setTimeout(() => {
+            disconnectedTimerRef.current = null;
+            if (
+              peerConnectionRef.current === pc &&
+              (pc.iceConnectionState === 'disconnected' || pc.connectionState === 'disconnected')
+            ) {
+              console.warn('[Voxa] Connection remained disconnected after 4s grace period. Triggering ICE restart...');
+              triggerIceRestart();
+            }
+          }, 4000);
+        }
       } else {
         setConnectionState(connState);
       }
     };
 
     pc.onconnectionstatechange = updateCombinedState;
-
-    // ICE Connection State & Recovery
-    pc.oniceconnectionstatechange = () => {
-      updateCombinedState();
-
-      if (peerConnectionRef.current !== pc) return;
-      const state = pc.iceConnectionState;
-      if (state === 'failed') {
-        console.warn('ICE connection failed across networks. Attempting ICE restart...');
-        if ('restartIce' in pc && typeof (pc as any).restartIce === 'function') {
-          (pc as any).restartIce();
-        } else {
-          pc.createOffer({ iceRestart: true }).then(offer => {
-            return pc.setLocalDescription(offer);
-          }).then(() => {
-            if (pc.localDescription && currentRoomIdRef.current === roomId) {
-              socket.emit('offer', { roomId, sdp: pc.localDescription });
-            }
-          }).catch(err => console.error('ICE restart failed:', err));
-        }
-      }
-    };
+    pc.oniceconnectionstatechange = updateCombinedState;
 
     // 5. WebRTC Perfect Negotiation - onnegotiationneeded
     pc.onnegotiationneeded = async () => {
@@ -145,7 +227,7 @@ export function useWebRTC(): UseWebRTCReturn {
           });
         }
       } catch (err) {
-        console.error('Error during negotiationneeded:', err);
+        console.error('[Voxa] Error during negotiationneeded:', err);
       } finally {
         isMakingOfferRef.current = false;
       }
@@ -159,11 +241,19 @@ export function useWebRTC(): UseWebRTCReturn {
       isIgnoringOfferRef.current = !isPoliteRef.current && offerCollision;
 
       if (isIgnoringOfferRef.current) {
-        return; // Impolite peer ignores offer collision
+        console.log('[Voxa] Impolite peer ignoring offer collision.');
+        return;
       }
 
       try {
-        await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        if (offerCollision && pc.signalingState !== 'stable') {
+          await Promise.all([
+            pc.setLocalDescription({ type: 'rollback' }).catch(() => {}),
+            pc.setRemoteDescription(new RTCSessionDescription(data.sdp))
+          ]);
+        } else {
+          await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        }
         
         // Flush buffered ICE candidates
         while (pendingCandidatesRef.current.length > 0) {
@@ -172,7 +262,7 @@ export function useWebRTC(): UseWebRTCReturn {
             try {
               await pc.addIceCandidate(new RTCIceCandidate(cand));
             } catch (candErr) {
-              console.warn('Error adding buffered candidate:', candErr);
+              console.warn('[Voxa] Error adding buffered candidate:', candErr);
             }
           }
         }
@@ -185,12 +275,16 @@ export function useWebRTC(): UseWebRTCReturn {
           });
         }
       } catch (err) {
-        console.error('Error handling offer:', err);
+        console.error('[Voxa] Error handling offer:', err);
       }
     };
 
     const handleAnswer = async (data: { sdp: RTCSessionDescriptionInit; senderSocketId: string }) => {
       if (peerConnectionRef.current !== pc) return;
+      if (pc.signalingState !== 'have-local-offer') {
+        console.warn('[Voxa] Ignoring answer received in signalingState:', pc.signalingState);
+        return;
+      }
       try {
         await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
         
@@ -201,12 +295,12 @@ export function useWebRTC(): UseWebRTCReturn {
             try {
               await pc.addIceCandidate(new RTCIceCandidate(cand));
             } catch (candErr) {
-              console.warn('Error adding pending candidate:', candErr);
+              console.warn('[Voxa] Error adding pending candidate:', candErr);
             }
           }
         }
       } catch (err) {
-        console.error('Error handling answer:', err);
+        console.error('[Voxa] Error handling answer:', err);
       }
     };
 
@@ -221,7 +315,7 @@ export function useWebRTC(): UseWebRTCReturn {
         }
       } catch (err) {
         if (!isIgnoringOfferRef.current) {
-          console.error('Error adding ICE candidate:', err);
+          console.error('[Voxa] Error adding ICE candidate:', err);
         }
       }
     };
@@ -235,7 +329,7 @@ export function useWebRTC(): UseWebRTCReturn {
     socket.off('answer').on('answer', handleAnswer);
     socket.off('ice_candidate').on('ice_candidate', handleIceCandidate);
     socket.off('peer_media_state').on('peer_media_state', handlePeerMediaState);
-  }, [socket, closePeerConnection]);
+  }, [socket, closePeerConnection, triggerIceRestart]);
 
   useEffect(() => {
     return () => {

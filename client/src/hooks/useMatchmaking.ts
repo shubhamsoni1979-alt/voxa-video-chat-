@@ -38,6 +38,12 @@ export function useMatchmaking() {
 
   const socket = getSocket();
   const matchDataRef = useRef<MatchData | null>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
+
+  // Sync localStream ref
+  useEffect(() => {
+    localStreamRef.current = localStream;
+  }, [localStream]);
 
   // Sync camera/mic track changes to remote peer
   useEffect(() => {
@@ -78,6 +84,7 @@ export function useMatchmaking() {
       setConnectionState('error');
       return;
     }
+    localStreamRef.current = stream;
 
     if (!socket.connected) {
       socket.connect();
@@ -202,10 +209,18 @@ export function useMatchmaking() {
       setConnectionState('matched');
       setStatusMessage("Someone's here! Connecting video...");
 
-      if (localStream) {
-        setConnectionState('connecting');
-        await initPeerConnection(data.roomId, data.isPolite, localStream);
+      const stream = localStreamRef.current ?? (await requestMediaPermissions());
+
+      if (!stream) {
+        setConnectionState('error');
+        setStatusMessage('Camera unavailable. Please allow access and try again.');
+        return;
       }
+
+      localStreamRef.current = stream;
+      setConnectionState('connecting');
+
+      await initPeerConnection(data.roomId, data.isPolite, stream);
     };
 
     const handleChatMessage = (data: { text: string; id: string; timestamp: number }) => {
@@ -248,7 +263,7 @@ export function useMatchmaking() {
       socket.off('peer_disconnected', handlePeerDisconnected);
       socket.off('error_message', handleErrorMessage);
     };
-  }, [socket, localStream, initPeerConnection, closePeerConnection]);
+  }, [socket, requestMediaPermissions, initPeerConnection, closePeerConnection]);
 
   return {
     connectionState,
