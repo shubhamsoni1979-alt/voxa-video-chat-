@@ -11,24 +11,31 @@ export const LocalVideo: React.FC<LocalVideoProps> = ({ stream, cameraOn, micOn 
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
-    if (videoRef.current && stream) {
-      videoRef.current.srcObject = stream;
+    const videoEl = videoRef.current;
+    if (videoEl && stream) {
+      if (videoEl.srcObject !== stream) {
+        videoEl.srcObject = stream;
+      }
     }
   }, [stream]);
 
+  const showVideo = Boolean(stream) && cameraOn;
+
   return (
     <div className="relative w-32 sm:w-44 aspect-[4/3] rounded-2xl overflow-hidden glass-card border border-white/20 shadow-2xl transition-all duration-300 group hover:scale-105">
-      {/* Local Video Stream - Mirrored */}
-      {stream && cameraOn ? (
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          className="w-full h-full object-cover transform -scale-x-100"
-        />
-      ) : (
-        <div className="w-full h-full bg-slate-900 flex flex-col items-center justify-center p-2 text-slate-400">
+      {/* Local Video Stream - Mirrored & Always Mounted */}
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        className={`w-full h-full object-cover transform -scale-x-100 transition-opacity duration-300 ${
+          showVideo ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+      />
+
+      {!showVideo && (
+        <div className="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center p-2 text-slate-400">
           <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center mb-1">
             <User className="w-5 h-5 text-slate-400" />
           </div>
