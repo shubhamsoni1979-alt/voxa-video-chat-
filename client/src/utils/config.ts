@@ -25,6 +25,7 @@ export interface IceConfigResult {
 }
 
 const DEFAULT_STUN_SERVERS: RTCIceServer[] = [
+  { urls: 'stun:stun.relay.metered.ca:80' },
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
   { urls: 'stun:stun2.l.google.com:19302' },
@@ -81,30 +82,29 @@ export const getIceServers = async (): Promise<IceConfigResult> => {
     console.warn('[Voxa Client] Failed to fetch /api/ice from backend:', err);
   }
 
-  // Resilient Client Fallback: OpenRelay & Metered TURN Servers (UDP, TCP 443, TLS 443)
+  // Resilient Client Fallback: OpenRelay & Metered TURN Servers
   const fallbackResult: IceConfigResult = {
     iceServers: [
       ...DEFAULT_STUN_SERVERS,
       {
-        urls: [
-          'turn:openrelay.metered.ca:80',
-          'turn:openrelay.metered.ca:443',
-          'turn:openrelay.metered.ca:443?transport=tcp',
-          'turns:openrelay.metered.ca:443'
-        ],
+        urls: 'turn:openrelay.metered.ca:80',
         username: 'openrelayproject',
         credential: 'openrelayproject'
       },
       {
-        urls: [
-          'turn:shubhamsoni979.metered.live:80',
-          'turn:shubhamsoni979.metered.live:443',
-          'turn:shubhamsoni979.metered.live:443?transport=tcp',
-          'turns:shubhamsoni979.metered.live:443',
-          'turns:shubhamsoni979.metered.live:443?transport=tcp'
-        ],
-        username: 'shubhamsoni979',
-        credential: 'FE0O3raJKACKUl4g08pNkACwVFSCtslK8DqjVOPRytywxuV8'
+        urls: 'turn:openrelay.metered.ca:80?transport=tcp',
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      },
+      {
+        urls: 'turn:openrelay.metered.ca:443',
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      },
+      {
+        urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
       }
     ],
     hasTurn: true

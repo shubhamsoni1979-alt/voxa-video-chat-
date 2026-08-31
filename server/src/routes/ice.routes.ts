@@ -10,6 +10,7 @@ export interface IceServer {
 }
 
 const DEFAULT_STUN_SERVERS: IceServer[] = [
+  { urls: 'stun:stun.relay.metered.ca:80' },
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
   { urls: 'stun:stun2.l.google.com:19302' }
@@ -38,7 +39,7 @@ router.get('/ice', async (_req: Request, res: Response) => {
 
     // Try fetching dynamically from Metered API
     try {
-      const meteredUrl = `https://${meteredAppName}.metered.live/api/v1/turn/credentials?secretKey=${meteredApiKey}&apiKey=${meteredApiKey}`;
+      const meteredUrl = `https://${meteredAppName}.metered.live/api/v1/turn/credentials?apiKey=${meteredApiKey}`;
       const response = await fetch(meteredUrl);
       if (response.ok) {
         const meteredServers = (await response.json()) as IceServer[];
@@ -57,28 +58,27 @@ router.get('/ice', async (_req: Request, res: Response) => {
       console.warn('[Voxa Server] Error fetching credentials from Metered API:', (err as Error).message);
     }
 
-    // Construct standard OpenRelay & Metered TURN server candidate set
+    // Construct standard OpenRelay TURN server candidate set
     const fallbackMeteredServers: IceServer[] = [
       {
-        urls: [
-          'turn:openrelay.metered.ca:80',
-          'turn:openrelay.metered.ca:443',
-          'turn:openrelay.metered.ca:443?transport=tcp',
-          'turns:openrelay.metered.ca:443'
-        ],
+        urls: 'turn:openrelay.metered.ca:80',
         username: 'openrelayproject',
         credential: 'openrelayproject'
       },
       {
-        urls: [
-          `turn:${meteredAppName}.metered.live:80`,
-          `turn:${meteredAppName}.metered.live:443`,
-          `turn:${meteredAppName}.metered.live:443?transport=tcp`,
-          `turns:${meteredAppName}.metered.live:443`,
-          `turns:${meteredAppName}.metered.live:443?transport=tcp`
-        ],
-        username: meteredAppName,
-        credential: meteredApiKey
+        urls: 'turn:openrelay.metered.ca:80?transport=tcp',
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      },
+      {
+        urls: 'turn:openrelay.metered.ca:443',
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      },
+      {
+        urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
       }
     ];
 
