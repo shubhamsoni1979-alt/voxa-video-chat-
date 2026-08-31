@@ -37,7 +37,7 @@ export function registerConnectionHandlers(io: Server): void {
       // 2. Notify partner and close room if in an active room
       const userSession = await redisService.getSession(socket.id);
       if (userSession && userSession.currentRoomId) {
-        socket.to(userSession.currentRoomId).emit('peer_disconnected', { reason: 'partner_disconnected' });
+        io.to(userSession.currentRoomId).emit('peer_disconnected', { reason: 'partner_disconnected' });
         await roomService.closeRoom(userSession.currentRoomId);
       }
 

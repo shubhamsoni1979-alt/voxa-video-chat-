@@ -1,5 +1,12 @@
-const defaultUrl = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-  ? 'http://localhost:5000'
+const isLocalHost = typeof window !== 'undefined' && (
+  window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1' ||
+  /^192\.168\.|^10\.|^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(window.location.hostname) ||
+  window.location.hostname.endsWith('.local')
+);
+
+const defaultUrl = isLocalHost && typeof window !== 'undefined'
+  ? `http://${window.location.hostname}:5000`
   : 'https://voxa-video-chat.onrender.com';
 
 export const API_URL = (import.meta.env.VITE_API_URL || import.meta.env.VITE_SERVER_URL || defaultUrl).replace(/\/$/, '');
@@ -74,7 +81,7 @@ export const getIceServers = async (): Promise<IceConfigResult> => {
     console.warn('[Voxa Client] Failed to fetch /api/ice from backend:', err);
   }
 
-  // Resilient Client Fallback: Metered TURN Servers
+  // Resilient Client Fallback: Metered TURN Servers (UDP, TCP, and TLS)
   const fallbackResult: IceConfigResult = {
     iceServers: [
       ...DEFAULT_STUN_SERVERS,
@@ -82,7 +89,9 @@ export const getIceServers = async (): Promise<IceConfigResult> => {
         urls: [
           'turn:shubhamsoni979.metered.live:80',
           'turn:shubhamsoni979.metered.live:443',
-          'turn:shubhamsoni979.metered.live:443?transport=tcp'
+          'turn:shubhamsoni979.metered.live:443?transport=tcp',
+          'turns:shubhamsoni979.metered.live:443',
+          'turns:shubhamsoni979.metered.live:443?transport=tcp'
         ],
         username: 'shubhamsoni979',
         credential: 'FE0O3raJKACKUl4g08pNkACwVFSCtslK8DqjVOPRytywxuV8'

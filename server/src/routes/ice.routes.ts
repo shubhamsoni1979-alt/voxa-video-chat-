@@ -63,7 +63,9 @@ router.get('/ice', async (_req: Request, res: Response) => {
         urls: [
           `turn:${meteredAppName}.metered.live:80`,
           `turn:${meteredAppName}.metered.live:443`,
-          `turn:${meteredAppName}.metered.live:443?transport=tcp`
+          `turn:${meteredAppName}.metered.live:443?transport=tcp`,
+          `turns:${meteredAppName}.metered.live:443`,
+          `turns:${meteredAppName}.metered.live:443?transport=tcp`
         ],
         username: meteredAppName,
         credential: meteredApiKey

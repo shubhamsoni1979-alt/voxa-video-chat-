@@ -11,11 +11,19 @@ interface RemoteVideoProps {
 export const RemoteVideo: React.FC<RemoteVideoProps> = ({ stream, peerMediaState, isConnected }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
+  const handlePlayVideo = () => {
+    if (videoRef.current && stream) {
+      videoRef.current.play().catch((err) => {
+        console.warn('Remote video play retry:', err);
+      });
+    }
+  };
+
   useEffect(() => {
     if (videoRef.current && stream) {
       videoRef.current.srcObject = stream;
       videoRef.current.play().catch((err) => {
-        console.warn('Remote video autoplay prevented by browser:', err);
+        console.warn('Remote video autoplay prevented by browser policy:', err);
       });
     }
   }, [stream]);
@@ -24,15 +32,18 @@ export const RemoteVideo: React.FC<RemoteVideoProps> = ({ stream, peerMediaState
   const isMicDisabled = !peerMediaState.micOn;
 
   return (
-    <div className="relative w-full h-full bg-[#080C14] flex items-center justify-center overflow-hidden rounded-3xl border border-white/5 shadow-2xl">
+    <div
+      onClick={handlePlayVideo}
+      className="relative w-full h-full bg-[#080C14] flex items-center justify-center overflow-hidden rounded-3xl border border-white/5 shadow-2xl cursor-pointer"
+    >
       
-      {/* Remote Video Element - Mirrored Stream for natural mirror display */}
+      {/* Remote Video Element - Unmirrored Stream for Natural Remote Viewing */}
       {stream && (
         <video
           ref={videoRef}
           autoPlay
           playsInline
-          className={`w-full h-full object-cover transform -scale-x-100 transition-opacity duration-300 ${
+          className={`w-full h-full object-cover transition-opacity duration-300 ${
             isCameraDisabled ? 'opacity-0' : 'opacity-100'
           }`}
         />

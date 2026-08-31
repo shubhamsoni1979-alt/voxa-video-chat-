@@ -58,7 +58,6 @@ export function useWebRTC(): UseWebRTCReturn {
   }, [socket]);
 
   const triggerIceRestart = useCallback(async () => {
-    if (isPoliteRef.current) return; // Only impolite peer initiates ICE restarts
     if (restartCountRef.current >= 3) {
       console.warn('[Voxa] Maximum ICE restart attempts reached (3).');
       return;
@@ -74,10 +73,9 @@ export function useWebRTC(): UseWebRTCReturn {
     try {
       if ('restartIce' in pc && typeof (pc as any).restartIce === 'function') {
         (pc as any).restartIce();
-      } else {
-        const offer = await pc.createOffer({ iceRestart: true });
-        await pc.setLocalDescription(offer);
       }
+      const offer = await pc.createOffer({ iceRestart: true });
+      await pc.setLocalDescription(offer);
       if (pc.localDescription && currentRoomIdRef.current === roomId) {
         socket.emit('offer', { roomId, sdp: pc.localDescription });
       }
