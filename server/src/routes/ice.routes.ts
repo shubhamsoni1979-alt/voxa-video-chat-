@@ -58,25 +58,32 @@ router.get('/ice', async (_req: Request, res: Response) => {
       console.warn('[Voxa Server] Error fetching credentials from Metered API:', (err as Error).message);
     }
 
-    // Construct standard OpenRelay TURN server candidate set
+    // Construct standard Metered global TURN server candidate set
+    // global.relay.metered.ca is the production endpoint; openrelay.metered.ca
+    // is a shared public demo server that rate-limits and rejects allocations under load.
     const fallbackMeteredServers: IceServer[] = [
       {
-        urls: 'turn:openrelay.metered.ca:80',
+        urls: 'turn:global.relay.metered.ca:80',
         username: 'openrelayproject',
         credential: 'openrelayproject'
       },
       {
-        urls: 'turn:openrelay.metered.ca:80?transport=tcp',
+        urls: 'turn:global.relay.metered.ca:80?transport=tcp',
         username: 'openrelayproject',
         credential: 'openrelayproject'
       },
       {
-        urls: 'turn:openrelay.metered.ca:443',
+        urls: 'turn:global.relay.metered.ca:443',
         username: 'openrelayproject',
         credential: 'openrelayproject'
       },
       {
-        urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+        urls: 'turn:global.relay.metered.ca:443?transport=tcp',
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      },
+      {
+        urls: 'turns:global.relay.metered.ca:443',
         username: 'openrelayproject',
         credential: 'openrelayproject'
       }
