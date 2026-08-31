@@ -18,7 +18,7 @@ const DEFAULT_STUN_SERVERS: IceServer[] = [
 
 // Default fallback Metered TURN configuration
 const DEFAULT_METERED_APP_NAME = 'shubhamsoni979';
-const DEFAULT_METERED_API_KEY = 'FE0O3raJKACKUl4g08pNkACwVFSCtslK8DqjVOPRytywxuV8';
+const DEFAULT_METERED_API_KEY = 'FEOO3raJKACkUl4g08pNkACwVFSCtslK8DqjVOPRytywxuV8';
 
 // In-memory cache for Metered credentials
 let cachedMeteredResponse: { iceServers: IceServer[]; expiresAt: number } | null = null;
@@ -39,11 +39,14 @@ router.get('/ice', async (_req: Request, res: Response) => {
 
     // Try fetching dynamically from Metered API
     try {
-      const meteredUrl = `https://${meteredAppName}.metered.live/api/v1/turn/credentials?apiKey=${meteredApiKey}`;
+      // Metered v2 API with secretKey parameter
+      const meteredUrl = `https://${meteredAppName}.metered.live/api/v2/turn/credentials?secretKey=${meteredApiKey}`;
       const response = await fetch(meteredUrl);
       if (response.ok) {
-        const meteredServers = (await response.json()) as IceServer[];
-        if (Array.isArray(meteredServers) && meteredServers.length > 0) {
+        const responseData = (await response.json()) as { data?: IceServer[] } | IceServer[];
+        // v2 API returns { data: [...] }, v1 returns array directly
+        const meteredServers: IceServer[] = Array.isArray(responseData) ? responseData : (responseData as any).data || [];
+        if (meteredServers.length > 0) {
           cachedMeteredResponse = {
             iceServers: meteredServers,
             expiresAt: now + CACHE_TTL_MS
@@ -53,6 +56,9 @@ router.get('/ice', async (_req: Request, res: Response) => {
             hasTurn: true
           });
         }
+      } else {
+        const body = await response.text();
+        console.warn(`[Voxa Server] Metered API returned ${response.status}: ${body}`);
       }
     } catch (err) {
       console.warn('[Voxa Server] Error fetching credentials from Metered API:', (err as Error).message);
