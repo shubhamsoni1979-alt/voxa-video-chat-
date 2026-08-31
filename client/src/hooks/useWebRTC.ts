@@ -165,7 +165,7 @@ export function useWebRTC(): UseWebRTCReturn {
     // ICE candidate error diagnostics
     pc.onicecandidateerror = (event: any) => {
       if (event.errorCode >= 400 && event.errorCode <= 499) {
-        console.error(`[Voxa] ICE server authentication error ${event.errorCode}: ${event.errorText} (${event.url})`);
+        console.debug(`[Voxa] ICE server probe response ${event.errorCode}: ${event.errorText} (${event.url})`);
       }
     };
 

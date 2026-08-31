@@ -23,10 +23,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
   const googleBtnRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (isOpen && window.google?.accounts?.id) {
+    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (isOpen && window.google?.accounts?.id && googleClientId && googleClientId.includes('.apps.googleusercontent.com')) {
       try {
-        const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '1082938491823-voxa-app.apps.googleusercontent.com';
-        
         window.google.accounts.id.initialize({
           client_id: googleClientId,
           callback: (response: any) => {
