@@ -82,34 +82,29 @@ export const getIceServers = async (): Promise<IceConfigResult> => {
     console.warn('[Voxa Client] Failed to fetch /api/ice from backend:', err);
   }
 
-  // Resilient Client Fallback: Metered global TURN relay (production endpoint)
-  // global.relay.metered.ca automatically routes to nearest TURN server.
-  // openrelay.metered.ca is a shared demo server — too rate-limited for production.
+  // Resilient Client Fallback: OpenRelay public TURN server
+  // openrelay.metered.ca is the CORRECT host for openrelayproject credentials.
+  // global.relay.metered.ca requires a private Metered account — do not use with openrelayproject.
   const fallbackResult: IceConfigResult = {
     iceServers: [
       ...DEFAULT_STUN_SERVERS,
       {
-        urls: 'turn:global.relay.metered.ca:80',
+        urls: 'turn:openrelay.metered.ca:80',
         username: 'openrelayproject',
         credential: 'openrelayproject'
       },
       {
-        urls: 'turn:global.relay.metered.ca:80?transport=tcp',
+        urls: 'turn:openrelay.metered.ca:80?transport=tcp',
         username: 'openrelayproject',
         credential: 'openrelayproject'
       },
       {
-        urls: 'turn:global.relay.metered.ca:443',
+        urls: 'turn:openrelay.metered.ca:443',
         username: 'openrelayproject',
         credential: 'openrelayproject'
       },
       {
-        urls: 'turn:global.relay.metered.ca:443?transport=tcp',
-        username: 'openrelayproject',
-        credential: 'openrelayproject'
-      },
-      {
-        urls: 'turns:global.relay.metered.ca:443',
+        urls: 'turn:openrelay.metered.ca:443?transport=tcp',
         username: 'openrelayproject',
         credential: 'openrelayproject'
       }
