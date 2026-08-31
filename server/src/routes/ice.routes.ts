@@ -1,3 +1,4 @@
+
 import { Router, Request, Response } from 'express';
 import { config } from '../config/env';
 
@@ -16,95 +17,83 @@ const DEFAULT_STUN_SERVERS: IceServer[] = [
   { urls: 'stun:stun2.l.google.com:19302' }
 ];
 
-// Default fallback Metered TURN configuration
+// Default Metered account configuration (fallback when env vars not set)
 const DEFAULT_METERED_APP_NAME = 'shubhamsoni979';
 const DEFAULT_METERED_API_KEY = 'FEOO3raJKACkUl4g08pNkACwVFSCtslK8DqjVOPRytywxuV8';
 
-// In-memory cache for Metered credentials
-let cachedMeteredResponse: { iceServers: IceServer[]; expiresAt: number } | null = null;
-const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+// Cache for generated credentials (valid 23h, refresh before expiry)
+let cachedCredential: {
+  iceServers: IceServer[];
+  expiresAt: number;
+} | null = null;
+
+// Build TURN server list from a username + password pair on Metered's global relays
+function buildMeteredTurnServers(username: string, credential: string): IceServer[] {
+  return [
+    { urls: 'turn:a.relay.metered.ca:80',             username, credential },
+    { urls: 'turn:a.relay.metered.ca:80?transport=tcp', username, credential },
+    { urls: 'turn:a.relay.metered.ca:443',             username, credential },
+    { urls: 'turn:a.relay.metered.ca:443?transport=tcp', username, credential },
+    { urls: 'turns:a.relay.metered.ca:443',            username, credential }
+  ];
+}
+
+// OpenRelay public fallback — used ONLY when Metered credential generation fails
+const OPENRELAY_FALLBACK: IceServer[] = [
+  { urls: 'turn:openrelay.metered.ca:80',             username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:openrelay.metered.ca:80?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:openrelay.metered.ca:443',            username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+];
 
 router.get('/ice', async (_req: Request, res: Response) => {
   try {
     const meteredAppName = config.meteredAppName || DEFAULT_METERED_APP_NAME;
-    const meteredApiKey = config.meteredApiKey || DEFAULT_METERED_API_KEY;
+    const meteredApiKey  = config.meteredApiKey  || DEFAULT_METERED_API_KEY;
 
     const now = Date.now();
-    if (cachedMeteredResponse && cachedMeteredResponse.expiresAt > now) {
-      return res.json({
-        iceServers: [...DEFAULT_STUN_SERVERS, ...cachedMeteredResponse.iceServers],
-        hasTurn: true
-      });
+
+    // Return cached credential if still valid (with 5 min safety buffer)
+    if (cachedCredential && cachedCredential.expiresAt > now + 5 * 60 * 1000) {
+      return res.json({ iceServers: [...DEFAULT_STUN_SERVERS, ...cachedCredential.iceServers], hasTurn: true });
     }
 
-    // Try fetching dynamically from Metered API
+    // Generate a fresh short-lived credential via Metered POST API
+    // This works even when no static credentials exist in the dashboard.
     try {
-      // Metered v2 API with secretKey parameter
-      const meteredUrl = `https://${meteredAppName}.metered.live/api/v2/turn/credentials?secretKey=${meteredApiKey}`;
-      const response = await fetch(meteredUrl);
-      if (response.ok) {
-        const responseData = (await response.json()) as { data?: IceServer[] } | IceServer[];
-        // v2 API returns { data: [...] }, v1 returns array directly
-        const meteredServers: IceServer[] = Array.isArray(responseData) ? responseData : (responseData as any).data || [];
-        if (meteredServers.length > 0) {
-          cachedMeteredResponse = {
-            iceServers: meteredServers,
-            expiresAt: now + CACHE_TTL_MS
+      const postUrl = `https://${meteredAppName}.metered.live/api/v1/turn/credential?secretKey=${meteredApiKey}`;
+      const postRes = await fetch(postUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label: 'voxa-auto', expiryInSeconds: 86400 }) // 24h
+      });
+
+      if (postRes.ok) {
+        const cred = await postRes.json() as { username?: string; password?: string };
+        if (cred.username && cred.password) {
+          const turnServers = buildMeteredTurnServers(cred.username, cred.password);
+          cachedCredential = {
+            iceServers: turnServers,
+            expiresAt: now + 23 * 60 * 60 * 1000 // cache 23h (1h before expiry)
           };
-          return res.json({
-            iceServers: [...DEFAULT_STUN_SERVERS, ...meteredServers],
-            hasTurn: true
-          });
+          console.log('[Voxa Server] Generated fresh Metered TURN credential:', cred.username);
+          return res.json({ iceServers: [...DEFAULT_STUN_SERVERS, ...turnServers], hasTurn: true });
         }
       } else {
-        const body = await response.text();
-        console.warn(`[Voxa Server] Metered API returned ${response.status}: ${body}`);
+        const errBody = await postRes.text();
+        console.warn(`[Voxa Server] Metered credential POST failed ${postRes.status}: ${errBody}`);
       }
     } catch (err) {
-      console.warn('[Voxa Server] Error fetching credentials from Metered API:', (err as Error).message);
+      console.warn('[Voxa Server] Error calling Metered POST API:', (err as Error).message);
     }
 
-    // Construct standard OpenRelay public TURN server candidates.
-    // openrelay.metered.ca is the CORRECT host for openrelayproject credentials.
-    // global.relay.metered.ca requires a private Metered account.
-    const fallbackMeteredServers: IceServer[] = [
-      {
-        urls: 'turn:openrelay.metered.ca:80',
-        username: 'openrelayproject',
-        credential: 'openrelayproject'
-      },
-      {
-        urls: 'turn:openrelay.metered.ca:80?transport=tcp',
-        username: 'openrelayproject',
-        credential: 'openrelayproject'
-      },
-      {
-        urls: 'turn:openrelay.metered.ca:443',
-        username: 'openrelayproject',
-        credential: 'openrelayproject'
-      },
-      {
-        urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-        username: 'openrelayproject',
-        credential: 'openrelayproject'
-      }
-    ];
+    // Last resort: OpenRelay public server
+    console.warn('[Voxa Server] Falling back to OpenRelay public TURN server');
+    return res.json({ iceServers: [...DEFAULT_STUN_SERVERS, ...OPENRELAY_FALLBACK], hasTurn: true });
 
-    cachedMeteredResponse = {
-      iceServers: fallbackMeteredServers,
-      expiresAt: now + CACHE_TTL_MS
-    };
-
-    return res.json({
-      iceServers: [...DEFAULT_STUN_SERVERS, ...fallbackMeteredServers],
-      hasTurn: true
-    });
   } catch (error) {
     console.error('[Voxa Server] ICE route internal error:', error);
-    return res.status(500).json({
-      iceServers: DEFAULT_STUN_SERVERS,
-      hasTurn: false
-    });
+    return res.status(500).json({ iceServers: DEFAULT_STUN_SERVERS, hasTurn: false });
   }
 });
 
