@@ -87,14 +87,16 @@ export function useWebRTC(): UseWebRTCReturn {
 
   const logCandidatePairStats = async (pc: RTCPeerConnection) => {
     try {
+      if (!pc || pc.connectionState === 'closed' || pc.signalingState === 'closed') return;
       const stats = await pc.getStats();
+      if (!stats) return;
       stats.forEach((report) => {
-        if (report.type === 'candidate-pair' && report.state === 'succeeded') {
-          const localCandidate = stats.get(report.localCandidateId);
-          const remoteCandidate = stats.get(report.remoteCandidateId);
+        if (report && report.type === 'candidate-pair' && report.state === 'succeeded') {
+          const localCandidate = report.localCandidateId ? stats.get(report.localCandidateId) : null;
+          const remoteCandidate = report.remoteCandidateId ? stats.get(report.remoteCandidateId) : null;
           if (localCandidate && remoteCandidate) {
             console.log(
-              `[Voxa] Connected via ${localCandidate.candidateType} <-> ${remoteCandidate.candidateType} (${localCandidate.protocol})`
+              `[Voxa] Connected via ${localCandidate.candidateType || 'unknown'} <-> ${remoteCandidate.candidateType || 'unknown'} (${localCandidate.protocol || 'udp'})`
             );
           }
         }

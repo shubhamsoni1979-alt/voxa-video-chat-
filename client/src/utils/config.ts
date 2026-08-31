@@ -81,10 +81,20 @@ export const getIceServers = async (): Promise<IceConfigResult> => {
     console.warn('[Voxa Client] Failed to fetch /api/ice from backend:', err);
   }
 
-  // Resilient Client Fallback: Metered TURN Servers & High-Performance STUN
+  // Resilient Client Fallback: OpenRelay & Metered TURN Servers (UDP, TCP 443, TLS 443)
   const fallbackResult: IceConfigResult = {
     iceServers: [
       ...DEFAULT_STUN_SERVERS,
+      {
+        urls: [
+          'turn:openrelay.metered.ca:80',
+          'turn:openrelay.metered.ca:443',
+          'turn:openrelay.metered.ca:443?transport=tcp',
+          'turns:openrelay.metered.ca:443'
+        ],
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      },
       {
         urls: [
           'turn:shubhamsoni979.metered.live:80',
