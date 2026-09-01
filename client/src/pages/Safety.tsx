@@ -10,17 +10,17 @@ export const Safety: React.FC = () => {
       <Navbar />
       <MarqueeBanner />
 
-      <main className="flex-grow max-w-4xl mx-auto px-4 py-12 sm:py-16 space-y-12">
-        <div className="text-center space-y-3">
+      <main className="flex-grow max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-16 space-y-8 sm:space-y-12 w-full">
+        <div className="text-center space-y-2 sm:space-y-3">
           <span className="text-xs font-bold uppercase tracking-widest text-[#B8001C]">Safety & Trust Center</span>
-          <h1 className="text-4xl font-extrabold font-heading text-slate-900">Voxa Safety Guidelines</h1>
-          <p className="text-slate-600 text-base max-w-xl mx-auto font-sans">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold font-heading text-slate-900">Voxa Safety Guidelines</h1>
+          <p className="text-slate-600 text-sm sm:text-base max-w-xl mx-auto font-sans">
             We are dedicated to building a safe, spontaneous, and respectful community for instant live video connections.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="spidey2-card-white p-6 rounded-3xl border border-slate-200 space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          <div className="spidey2-card-white p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 space-y-3">
             <div className="w-10 h-10 rounded-xl bg-[#B8001C]/10 border border-[#B8001C]/20 text-[#B8001C] flex items-center justify-center">
               <EyeOff className="w-5 h-5" />
             </div>

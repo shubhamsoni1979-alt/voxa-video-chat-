@@ -35,27 +35,27 @@ export const HowItWorks: React.FC = () => {
   ];
 
   return (
-    <section id="how-it-works" className="py-16 md:py-24 bg-slate-50 relative border-t border-slate-200">
+    <section id="how-it-works" className="py-12 sm:py-16 md:py-24 bg-slate-50 relative border-t border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
-        <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
+        <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-16 space-y-2 sm:space-y-3">
           <span className="text-xs uppercase font-sans tracking-widest text-[#B8001C] font-bold">
             SIMPLICITY BY DESIGN
           </span>
-          <h2 className="text-3xl sm:text-5xl font-extrabold font-serifHeading text-slate-900">How Voxa Works</h2>
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-extrabold font-serifHeading text-slate-900">How Voxa Works</h2>
           <p className="text-slate-600 font-sans text-sm sm:text-base font-normal">No registrations, no profiles. Just real face-to-face fun in 4 steps.</p>
         </div>
 
-        {/* 4 Steps Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* 4 Steps Grid: 1 col on mobile, 2 cols on tablet, 4 cols on desktop */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {steps.map((step) => {
             const IconComponent = step.icon;
             return (
               <motion.div
                 key={step.num}
                 whileHover={{ y: -6 }}
-                className="spidey2-card-white rounded-3xl p-6 border border-slate-200 relative flex flex-col justify-between"
+                className="spidey2-card-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 border border-slate-200 relative flex flex-col justify-between"
               >
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">

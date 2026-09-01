@@ -90,29 +90,30 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
 
   const modalContent = (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
         
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ type: 'spring' as const, stiffness: 200, damping: 20 }}
-          className="relative w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-2xl overflow-hidden font-sans my-auto"
+          className="relative w-full max-w-md max-h-[90dvh] overflow-y-auto bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 border border-slate-200 shadow-2xl font-sans my-auto custom-scrollbar"
         >
           {/* Top Close Button */}
           <button
             onClick={onClose}
-            className="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+            aria-label="Close modal"
+            className="absolute top-3 right-3 sm:top-5 sm:right-5 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
 
           {/* Header Title */}
-          <div className="text-center space-y-2 mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-[#B8001C] text-white flex items-center justify-center mx-auto shadow-md">
-              <LogIn className="w-6 h-6" />
+          <div className="text-center space-y-2 mb-5 sm:mb-6">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#B8001C] text-white flex items-center justify-center mx-auto shadow-md">
+              <LogIn className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <h2 className="text-2xl font-black font-heading text-slate-900">
+            <h2 className="text-xl sm:text-2xl font-black font-heading text-slate-900">
               {isSignUp ? 'Create Voxa Account' : 'Sign in to Voxa'}
             </h2>
             <p className="text-xs text-slate-500 font-medium">
@@ -126,7 +127,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleSimulatedGoogleLogin}
-              className="w-full py-3 px-4 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-sm font-bold flex items-center justify-center space-x-3 border border-slate-300 shadow-sm transition-all"
+              className="w-full min-h-[44px] py-3 px-4 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-bold flex items-center justify-center space-x-3 border border-slate-300 shadow-sm transition-all"
             >
               {/* Multicolor Official Google 'G' Logo */}
               <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -154,7 +155,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
           </div>
 
           {/* Divider */}
-          <div className="relative my-5">
+          <div className="relative my-4 sm:my-5">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-slate-200"></div>
             </div>
@@ -164,7 +165,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-3.5">
+          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-3.5">
             {isSignUp && (
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-700">Display Name</label>
@@ -177,7 +178,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
                     placeholder="Your Name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#B8001C]"
+                    className="w-full min-h-[44px] pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#B8001C]"
                   />
                 </div>
               </div>
@@ -194,7 +195,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
                   placeholder="you@gmail.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#B8001C]"
+                  className="w-full min-h-[44px] pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#B8001C]"
                 />
               </div>
             </div>
@@ -210,7 +211,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#B8001C]"
+                  className="w-full min-h-[44px] pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#B8001C]"
                 />
               </div>
             </div>
@@ -219,7 +220,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               type="submit"
-              className="w-full spidey2-btn-red py-3 rounded-xl text-sm font-extrabold text-white shadow-md flex items-center justify-center space-x-2 mt-2"
+              className="w-full min-h-[44px] spidey2-btn-red py-3 rounded-xl text-sm font-extrabold text-white shadow-md flex items-center justify-center space-x-2 mt-2"
             >
               <span>{isSignUp ? 'Create Account' : 'Sign In'}</span>
               <ArrowRight className="w-4 h-4" />
@@ -227,11 +228,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
           </form>
 
           {/* Switch Tab */}
-          <div className="mt-5 text-center text-xs text-slate-500 font-medium">
+          <div className="mt-4 sm:mt-5 text-center text-xs text-slate-500 font-medium">
             {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
             <button
               onClick={() => setIsSignUp(!isSignUp)}
-              className="text-[#B8001C] font-extrabold hover:underline ml-1"
+              className="text-[#B8001C] font-extrabold hover:underline ml-1 py-1"
             >
               {isSignUp ? 'Sign In' : 'Create One'}
             </button>

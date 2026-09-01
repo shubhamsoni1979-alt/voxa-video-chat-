@@ -38,31 +38,32 @@ export const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, onSub
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto"
         >
           <motion.div
             initial={{ scale: 0.85, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.85, opacity: 0, y: 20 }}
             transition={{ type: 'spring' as const, stiffness: 200, damping: 20 }}
-            className="w-full max-w-lg glass-card rounded-3xl p-6 sm:p-8 border border-white/10 shadow-2xl space-y-6 relative"
+            className="w-full max-w-lg max-h-[90dvh] overflow-y-auto glass-card rounded-2xl sm:rounded-3xl p-5 sm:p-8 border border-white/10 shadow-2xl space-y-5 sm:space-y-6 relative my-auto custom-scrollbar"
           >
             
             {/* Close Button */}
             <button
               onClick={onClose}
-              className="absolute top-6 right-6 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors"
+              aria-label="Close report modal"
+              className="absolute top-3 right-3 sm:top-6 sm:right-6 text-slate-400 hover:text-white p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-white/5 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
 
             {/* Header */}
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center">
-                <Flag className="w-6 h-6" />
+            <div className="flex items-center space-x-3 pr-8 sm:pr-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
+                <Flag className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div>
-                <h3 className="text-xl font-bold font-outfit text-white">Report & Block User</h3>
+                <h3 className="text-lg sm:text-xl font-bold font-outfit text-white">Report & Block User</h3>
                 <p className="text-slate-400 text-xs">Help us keep Voxa safe. Reports are strictly confidential.</p>
               </div>
             </div>
@@ -73,25 +74,25 @@ export const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, onSub
                 <label className="text-xs font-semibold uppercase tracking-wider text-amber-400">
                   Select Reason
                 </label>
-                <div className="grid grid-cols-1 gap-2 max-h-56 overflow-y-auto pr-1">
+                <div className="grid grid-cols-1 gap-2 max-h-48 sm:max-h-56 overflow-y-auto pr-1 custom-scrollbar">
                   {reasons.map((r) => (
                     <motion.button
                       whileTap={{ scale: 0.98 }}
                       type="button"
                       key={r.id}
                       onClick={() => setSelectedReason(r.id)}
-                      className={`flex items-center justify-between p-3 rounded-xl border text-left transition-all ${
+                      className={`flex items-center justify-between p-2.5 sm:p-3 min-h-[44px] rounded-xl border text-left transition-all ${
                         selectedReason === r.id
                           ? 'bg-rose-500/20 border-rose-500 text-white'
                           : 'bg-slate-900/60 border-white/5 text-slate-300 hover:border-white/20'
                       }`}
                     >
                       <div>
-                        <div className="text-sm font-semibold">{r.label}</div>
-                        <div className="text-[11px] text-slate-400">{r.desc}</div>
+                        <div className="text-xs sm:text-sm font-semibold">{r.label}</div>
+                        <div className="text-[10px] sm:text-[11px] text-slate-400">{r.desc}</div>
                       </div>
                       {selectedReason === r.id && (
-                        <div className="w-5 h-5 rounded-full bg-rose-500 text-white flex items-center justify-center shrink-0">
+                        <div className="w-5 h-5 rounded-full bg-rose-500 text-white flex items-center justify-center shrink-0 ml-2">
                           <Check className="w-3 h-3" />
                         </div>
                       )}
@@ -110,7 +111,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, onSub
                   onChange={(e) => setDetails(e.target.value)}
                   rows={2}
                   placeholder="Describe what happened..."
-                  className="w-full bg-slate-900/80 border border-white/10 rounded-xl p-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-rose-500 transition-colors resize-none"
+                  className="w-full bg-slate-900/80 border border-white/10 rounded-xl p-3 text-xs sm:text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-rose-500 transition-colors resize-none"
                 />
               </div>
 
@@ -120,7 +121,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, onSub
                   whileTap={{ scale: 0.98 }}
                   type="button"
                   onClick={onClose}
-                  className="flex-1 py-3 rounded-xl border border-white/10 text-slate-300 text-sm font-semibold hover:bg-white/5 transition-colors"
+                  className="flex-1 min-h-[44px] py-3 rounded-xl border border-white/10 text-slate-300 text-xs sm:text-sm font-semibold hover:bg-white/5 transition-colors"
                 >
                   Cancel
                 </motion.button>
@@ -128,7 +129,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, onSub
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   type="submit"
-                  className="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold py-3 rounded-xl shadow-lg shadow-rose-600/20 transition-all"
+                  className="flex-1 min-h-[44px] bg-rose-600 hover:bg-rose-700 text-white text-xs sm:text-sm font-bold py-3 rounded-xl shadow-lg shadow-rose-600/20 transition-all"
                 >
                   Report & Block
                 </motion.button>

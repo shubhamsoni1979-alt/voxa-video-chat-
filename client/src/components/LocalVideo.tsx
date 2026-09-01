@@ -22,7 +22,7 @@ export const LocalVideo: React.FC<LocalVideoProps> = ({ stream, cameraOn, micOn 
   const showVideo = Boolean(stream) && cameraOn;
 
   return (
-    <div className="relative w-32 sm:w-44 aspect-[4/3] rounded-2xl overflow-hidden glass-card border border-white/20 shadow-2xl transition-all duration-300 group hover:scale-105">
+    <div className="relative w-24 sm:w-36 md:w-40 lg:w-48 aspect-[4/3] max-w-[30vw] max-h-[25vh] rounded-xl sm:rounded-2xl overflow-hidden glass-card border border-white/20 shadow-2xl transition-all duration-300 group hover:scale-105">
       {/* Local Video Stream - Mirrored & Always Mounted */}
       <video
         ref={videoRef}

@@ -29,7 +29,7 @@ export const NotFound: React.FC = () => {
 
           <Link
             to="/"
-            className="inline-flex items-center space-x-2 spidey2-btn-black text-white px-6 py-3 rounded-full text-sm font-bold shadow-md hover:scale-105 transition-transform"
+            className="inline-flex items-center justify-center space-x-2 spidey2-btn-black text-white px-6 py-3 min-h-[44px] rounded-full text-xs sm:text-sm font-bold shadow-md hover:scale-105 transition-transform"
           >
             <Home className="w-4 h-4" />
             <span>Return to Voxa Home</span>

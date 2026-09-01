@@ -3,6 +3,14 @@
 @tailwind utilities;
 
 @layer base {
+  html,
+  body,
+  #root {
+    width: 100%;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
   body {
     font-family: 'Inter', sans-serif;
     background-color: #FFFFFF;
@@ -18,6 +26,15 @@
     font-family: 'Merriweather', 'Plus Jakarta Sans', serif;
     letter-spacing: -0.02em;
   }
+}
+
+/* Utility to hide scrollbars while maintaining scroll functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Spider-Man 2 Curved Wave Split Background Overlay */

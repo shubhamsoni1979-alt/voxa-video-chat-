@@ -65,18 +65,18 @@ export const RemoteVideo: React.FC<RemoteVideoProps> = ({ stream, peerMediaState
 
       {/* Camera Off / Waiting Placeholder */}
       {(!stream || isCameraDisabled || !isConnected) && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#0B0F17] via-[#111726] to-[#0A0E18] space-y-4 pointer-events-none">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#0B0F17] via-[#111726] to-[#0A0E18] p-4 space-y-3 sm:space-y-4 pointer-events-none">
           <div className="relative">
-            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-slate-800/80 border border-white/10 flex items-center justify-center shadow-xl">
-              <User className="w-12 h-12 sm:w-16 sm:h-16 text-slate-400" />
+            <div className="w-20 h-20 sm:w-28 md:w-32 rounded-full bg-slate-800/80 border border-white/10 flex items-center justify-center shadow-xl">
+              <User className="w-10 h-10 sm:w-14 sm:h-14 text-slate-400" />
             </div>
             {isCameraDisabled && isConnected && (
-              <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-400 flex items-center justify-center">
-                <VideoOff className="w-4 h-4" />
+              <div className="absolute bottom-0 right-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-400 flex items-center justify-center">
+                <VideoOff className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             )}
           </div>
-          <span className="text-slate-400 text-sm font-medium">
+          <span className="text-slate-400 text-xs sm:text-sm font-medium text-center max-w-[260px] sm:max-w-none">
             {!isConnected 
               ? "Connecting media..." 
               : isCameraDisabled 
@@ -88,7 +88,7 @@ export const RemoteVideo: React.FC<RemoteVideoProps> = ({ stream, peerMediaState
 
       {/* Mic Muted Overlay Indicator for Remote Peer */}
       {isConnected && isMicDisabled && (
-        <div className="absolute top-4 left-4 glass-card px-3 py-1.5 rounded-full flex items-center space-x-1.5 text-xs text-amber-300 border border-amber-500/20 shadow-md pointer-events-none">
+        <div className="absolute top-2 left-2 sm:top-4 sm:left-4 glass-card px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full flex items-center space-x-1.5 text-[11px] sm:text-xs text-amber-300 border border-amber-500/20 shadow-md pointer-events-none">
           <MicOff className="w-3.5 h-3.5" />
           <span>Partner muted</span>
         </div>

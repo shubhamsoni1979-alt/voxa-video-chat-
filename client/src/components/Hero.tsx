@@ -21,7 +21,7 @@ export const Hero: React.FC<HeroProps> = ({ onStartClick, onHowItWorksClick }) =
   };
 
   return (
-    <section className="relative min-h-[calc(100vh-7rem)] flex items-center overflow-hidden bg-white">
+    <section className="relative min-h-[calc(100dvh-4rem)] flex items-center overflow-hidden bg-white py-8 sm:py-12 lg:py-16">
       
       {/* Curved Split Background */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -38,40 +38,40 @@ export const Hero: React.FC<HeroProps> = ({ onStartClick, onHowItWorksClick }) =
         </svg>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full py-12 lg:py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 lg:gap-12 items-center">
           
           {/* Left Text Column */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
-            className="lg:col-span-7 flex flex-col items-start text-left space-y-6"
+            className="lg:col-span-7 flex flex-col items-start text-left space-y-4 sm:space-y-6"
           >
             {/* Badge */}
-            <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-xs font-bold text-slate-800 shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-[#B8001C] animate-pulse"></span>
-              <span>⚡ INSTANT LIVE MATCHMAKING • 1,420+ ONLINE</span>
+            <div className="inline-flex items-center space-x-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-slate-100 border border-slate-200 text-[10px] sm:text-xs font-bold text-slate-800 shadow-sm max-w-full">
+              <span className="w-2 h-2 rounded-full bg-[#B8001C] animate-pulse shrink-0"></span>
+              <span className="truncate">⚡ LIVE MATCHMAKING • 1,420+ ONLINE</span>
             </div>
 
             {/* Title */}
-            <h1 className="text-4xl sm:text-6xl font-black font-heading text-slate-900 tracking-tight leading-[1.08]">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-black font-heading text-slate-900 tracking-tight leading-[1.1]">
               Meet someone new. <br />
               <span className="text-[#B8001C]">Right now. 🎬</span>
             </h1>
 
             {/* Description Subheadline */}
-            <p className="text-base sm:text-lg text-slate-700 max-w-xl font-sans leading-relaxed font-medium">
+            <p className="text-sm sm:text-base md:text-lg text-slate-700 max-w-xl font-sans leading-relaxed font-medium">
               Jump into a spontaneous face-to-face video conversation with cool strangers from around the world in milliseconds.
             </p>
 
             {/* Action Buttons */}
-            <div className="pt-2 flex flex-col sm:flex-row items-center space-y-3.5 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
+            <div className="pt-2 flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
               <motion.button
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={handleStart}
-                className="w-full sm:w-auto spidey2-btn-black text-white text-base font-bold px-8 py-4 rounded-xl flex items-center justify-center space-x-3 shadow-lg"
+                className="w-full sm:w-auto min-h-[48px] spidey2-btn-black text-white text-sm sm:text-base font-bold px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl flex items-center justify-center space-x-3 shadow-lg shrink-0"
               >
                 <Video className="w-5 h-5" />
                 <span>START VIDEO CHAT</span>
@@ -82,7 +82,7 @@ export const Hero: React.FC<HeroProps> = ({ onStartClick, onHowItWorksClick }) =
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={onHowItWorksClick}
-                className="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-900 text-base font-semibold px-6 py-4 rounded-xl flex items-center justify-center space-x-2 transition-colors border border-slate-300"
+                className="w-full sm:w-auto min-h-[48px] bg-slate-100 hover:bg-slate-200 text-slate-900 text-sm sm:text-base font-semibold px-5 sm:px-6 py-3.5 sm:py-4 rounded-xl flex items-center justify-center space-x-2 transition-colors border border-slate-300 shrink-0"
               >
                 <Play className="w-4 h-4 fill-slate-800" />
                 <span>How It Works</span>
@@ -90,17 +90,17 @@ export const Hero: React.FC<HeroProps> = ({ onStartClick, onHowItWorksClick }) =
             </div>
 
             {/* Feature Bullets */}
-            <div className="pt-4 flex items-center space-x-6 text-xs font-bold text-slate-600">
+            <div className="pt-2 sm:pt-4 flex flex-wrap items-center gap-3 sm:gap-6 text-xs font-bold text-slate-600">
               <div className="flex items-center space-x-1.5">
-                <Zap className="w-4 h-4 text-[#B8001C]" />
+                <Zap className="w-4 h-4 text-[#B8001C] shrink-0" />
                 <span>Sub-50ms Match</span>
               </div>
               <div className="flex items-center space-x-1.5">
-                <ShieldCheck className="w-4 h-4 text-slate-900" />
+                <ShieldCheck className="w-4 h-4 text-slate-900 shrink-0" />
                 <span>Private Encrypted P2P</span>
               </div>
               <div className="flex items-center space-x-1.5">
-                <Globe className="w-4 h-4 text-[#B8001C]" />
+                <Globe className="w-4 h-4 text-[#B8001C] shrink-0" />
                 <span>Global Community</span>
               </div>
             </div>

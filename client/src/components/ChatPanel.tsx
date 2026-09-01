@@ -72,7 +72,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         {onCloseMobile && (
           <button
             onClick={onCloseMobile}
-            className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 shrink-0"
+            aria-label="Close chat"
+            className="md:hidden p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/10 shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
@@ -80,7 +81,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       </div>
 
       {/* Messages Scroll Area */}
-      <div className="flex-1 p-3.5 overflow-y-auto space-y-3 custom-scrollbar min-h-0">
+      <div className="flex-1 p-3 sm:p-3.5 overflow-y-auto space-y-3 custom-scrollbar min-h-0">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center space-y-3 text-slate-400 p-4">
             <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-300">
@@ -133,13 +134,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       </div>
 
       {/* Quick Emoji Bar */}
-      <div className="px-3 py-2 bg-slate-950/60 border-t border-white/5 flex items-center space-x-1.5 overflow-x-auto custom-scrollbar shrink-0">
+      <div className="px-3 py-2 bg-slate-950/60 border-t border-white/5 flex items-center space-x-1.5 overflow-x-auto no-scrollbar shrink-0">
         {QUICK_EMOJIS.map((emoji) => (
           <button
             key={emoji}
             onClick={() => handleEmojiClick(emoji)}
             disabled={!isConnected}
-            className="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+            aria-label={`Send emoji ${emoji}`}
+            className="min-w-[36px] min-h-[36px] px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-sm sm:text-base transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0 flex items-center justify-center"
           >
             {emoji}
           </button>
@@ -147,22 +149,23 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       </div>
 
       {/* Chat Input Form */}
-      <form onSubmit={handleSubmit} className="p-3 bg-slate-950 border-t border-white/10 flex items-center space-x-2 shrink-0">
+      <form onSubmit={handleSubmit} className="p-2.5 sm:p-3 bg-slate-950 border-t border-white/10 flex items-center space-x-2 shrink-0">
         <input
           type="text"
           placeholder={isConnected ? 'Type a message...' : 'Connect with stranger to chat...'}
           disabled={!isConnected}
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
-          className="flex-1 min-w-0 bg-slate-800/80 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#B8001C] disabled:opacity-50"
+          className="flex-1 min-w-0 min-h-[44px] bg-slate-800/80 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#B8001C] disabled:opacity-50"
         />
         
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           type="submit"
+          aria-label="Send message"
           disabled={!isConnected || !inputText.trim()}
-          className="w-9 h-9 rounded-xl bg-[#B8001C] hover:bg-[#8B0014] text-white flex items-center justify-center shrink-0 disabled:opacity-40 disabled:cursor-not-allowed shadow-md transition-colors"
+          className="min-w-[44px] min-h-[44px] w-11 h-11 rounded-xl bg-[#B8001C] hover:bg-[#8B0014] text-white flex items-center justify-center shrink-0 disabled:opacity-40 disabled:cursor-not-allowed shadow-md transition-colors"
         >
           <Send className="w-4 h-4" />
         </motion.button>
