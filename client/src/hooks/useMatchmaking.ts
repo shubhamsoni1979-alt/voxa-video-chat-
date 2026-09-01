@@ -7,6 +7,7 @@ import { API_URL } from '../utils/config';
 
 export function useMatchmaking() {
   const [connectionState, setConnectionState] = useState<ConnectionState>('idle');
+  const connectionStateRef = useRef<ConnectionState>('idle');
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [partnerSocketId, setPartnerSocketId] = useState<string | null>(null);
   const [currentRoomId, setCurrentRoomId] = useState<string | null>(null);
@@ -45,6 +46,11 @@ export function useMatchmaking() {
     localStreamRef.current = localStream;
   }, [localStream]);
 
+  // Sync connectionState ref to avoid stale closures
+  useEffect(() => {
+    connectionStateRef.current = connectionState;
+  }, [connectionState]);
+
   // Sync camera/mic track changes to remote peer
   useEffect(() => {
     if (connectionState === 'connected' || connectionState === 'connecting') {
@@ -67,7 +73,9 @@ export function useMatchmaking() {
         setStatusMessage('Establishing media connection...');
       }, 7000);
     } else if (rtcState === 'failed' || rtcState === 'disconnected') {
-      if (connectionState === 'connected' || connectionState === 'connecting') {
+      // Use ref to read the latest connectionState without adding it to deps
+      const currentState = connectionStateRef.current;
+      if (currentState === 'connected' || currentState === 'connecting') {
         setConnectionState('partner_disconnected');
         setStatusMessage('Connection lost with partner.');
       }
@@ -76,7 +84,7 @@ export function useMatchmaking() {
     return () => {
       if (connectingTimer) clearTimeout(connectingTimer);
     };
-  }, [rtcState, connectionState]);
+  }, [rtcState]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);

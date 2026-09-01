@@ -67,15 +67,24 @@ class RedisService {
   }
 
   async getSession(socketId: string): Promise<UserSession | null> {
+    // Prefer in-memory (always written first, authoritative for this process)
+    const memSession = this.memorySessions.get(socketId);
+    if (memSession) return memSession;
+
+    // Fall back to Redis (may contain data from other server instances)
     if (this.isRedisConnected && this.redisClient) {
       try {
         const raw = await this.redisClient.get(`session:${socketId}`);
-        if (raw) return JSON.parse(raw);
+        if (raw) {
+          const session: UserSession = JSON.parse(raw);
+          this.memorySessions.set(socketId, session);
+          return session;
+        }
       } catch (e) {
-        // Fall through to memory
+        // Redis read failed — no data available
       }
     }
-    return this.memorySessions.get(socketId) || null;
+    return null;
   }
 
   async removeSession(socketId: string): Promise<void> {
@@ -123,7 +132,7 @@ class RedisService {
       if (candidate.socketId !== userSocketId && !blockedSockets.includes(candidate.socketId)) {
         // Remove candidate from queue
         this.memoryQueue.splice(i, 1);
-        this.removeFromQueue(candidate.socketId);
+        await this.removeFromQueue(candidate.socketId);
         return candidate;
       }
     }
@@ -141,13 +150,22 @@ class RedisService {
   }
 
   async getRoom(roomId: string): Promise<RoomState | null> {
+    // Prefer in-memory (always written first, authoritative for this process)
+    const memRoom = this.memoryRooms.get(roomId);
+    if (memRoom) return memRoom;
+
+    // Fall back to Redis (may contain data from other server instances)
     if (this.isRedisConnected && this.redisClient) {
       try {
         const raw = await this.redisClient.get(`room:${roomId}`);
-        if (raw) return JSON.parse(raw);
+        if (raw) {
+          const room: RoomState = JSON.parse(raw);
+          this.memoryRooms.set(roomId, room);
+          return room;
+        }
       } catch (e) {}
     }
-    return this.memoryRooms.get(roomId) || null;
+    return null;
   }
 
   async deleteRoom(roomId: string): Promise<void> {

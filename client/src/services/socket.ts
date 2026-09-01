@@ -17,7 +17,9 @@ export const getSocket = (): Socket => {
   if (!socketInstance) {
     const serverUrl = API_URL || window.location.origin;
 
-    // Kick off a background warm-up ping before the socket connects
+    // Fire-and-forget background warm-up ping. Not awaited intentionally:
+    // Socket.IO has its own reconnection loop, so the wake-up just gives
+    // Render's free-tier server a head start on cold-boot before the socket handshake.
     wakeBackend(serverUrl);
 
     socketInstance = io(serverUrl, {

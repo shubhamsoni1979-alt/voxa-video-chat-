@@ -1,5 +1,4 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Video, ArrowRight, Play, ShieldCheck, Zap, Globe, Sparkles, Volume2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -10,15 +9,14 @@ interface HeroProps {
 }
 
 export const Hero: React.FC<HeroProps> = ({ onStartClick, onHowItWorksClick }) => {
-  const navigate = useNavigate();
   const { isLoggedIn, openLoginModal } = useAuth();
 
   const handleStart = () => {
     if (!isLoggedIn) {
       openLoginModal('/chat');
     } else {
+      // Delegate to parent (Home) which opens safety modal before navigating
       onStartClick();
-      navigate('/chat');
     }
   };
 

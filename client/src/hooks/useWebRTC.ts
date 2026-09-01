@@ -26,10 +26,16 @@ export function useWebRTC(): UseWebRTCReturn {
   const hasRelayCandidateRef = useRef<boolean>(false);
   const restartCountRef = useRef<number>(0);
   const disconnectedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cleanupSocketListenersRef = useRef<(() => void) | null>(null);
 
   const socket = getSocket();
 
   const closePeerConnection = useCallback(() => {
+    // Clean up socket signaling listeners first
+    if (cleanupSocketListenersRef.current) {
+      cleanupSocketListenersRef.current();
+      cleanupSocketListenersRef.current = null;
+    }
     if (disconnectedTimerRef.current) {
       clearTimeout(disconnectedTimerRef.current);
       disconnectedTimerRef.current = null;
@@ -328,11 +334,23 @@ export function useWebRTC(): UseWebRTCReturn {
       setPeerMediaState(data);
     };
 
-    // Attach temporary socket listeners for signaling
-    socket.off('offer').on('offer', handleOffer);
-    socket.off('answer').on('answer', handleAnswer);
-    socket.off('ice_candidate').on('ice_candidate', handleIceCandidate);
-    socket.off('peer_media_state').on('peer_media_state', handlePeerMediaState);
+    // Clean up any previous signaling listeners before attaching new ones
+    if (cleanupSocketListenersRef.current) {
+      cleanupSocketListenersRef.current();
+    }
+
+    socket.on('offer', handleOffer);
+    socket.on('answer', handleAnswer);
+    socket.on('ice_candidate', handleIceCandidate);
+    socket.on('peer_media_state', handlePeerMediaState);
+
+    // Store cleanup function for these specific listener references
+    cleanupSocketListenersRef.current = () => {
+      socket.off('offer', handleOffer);
+      socket.off('answer', handleAnswer);
+      socket.off('ice_candidate', handleIceCandidate);
+      socket.off('peer_media_state', handlePeerMediaState);
+    };
   }, [socket, closePeerConnection, triggerIceRestart]);
 
   useEffect(() => {

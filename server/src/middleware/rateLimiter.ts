@@ -16,8 +16,17 @@ export const reportRateLimiter = rateLimit({
 
 // Socket event rate limiter map (Socket ID -> timestamp list)
 const socketEventTracker = new Map<string, number[]>();
+const MAX_TRACKED_SOCKETS = 10000;
 
 export function checkSocketRateLimit(socketId: string, maxEventsPerSec = 10): boolean {
+  // Prevent unbounded Map growth from leaked socket entries
+  if (socketEventTracker.size > MAX_TRACKED_SOCKETS) {
+    const keys = Array.from(socketEventTracker.keys());
+    for (let i = 0; i < keys.length / 2; i++) {
+      socketEventTracker.delete(keys[i]);
+    }
+  }
+
   const now = Date.now();
   const timestamps = socketEventTracker.get(socketId) || [];
   

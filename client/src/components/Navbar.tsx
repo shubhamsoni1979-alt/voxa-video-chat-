@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Shield, Lock, LogIn, User, LogOut, Settings, ChevronDown, CheckCircle2, Menu, X } from 'lucide-react';
 import { useSocketStatus } from '../hooks/useSocketStatus';
@@ -6,9 +6,7 @@ import { useAuth, UserProfile } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LoginModal } from './LoginModal';
 
-interface NavbarProps {
-  onStartClick?: () => void;
-}
+interface NavbarProps {}
 
 export const Navbar: React.FC<NavbarProps> = () => {
   const navigate = useNavigate();
@@ -18,6 +16,19 @@ export const Navbar: React.FC<NavbarProps> = () => {
   
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close profile dropdown when clicking outside
+  useEffect(() => {
+    if (!isProfileMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isProfileMenuOpen]);
 
   const handleLoginSuccess = (userData: UserProfile) => {
     login(userData);
@@ -104,7 +115,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
         <div className="flex items-center space-x-3">
           {isLoggedIn && user ? (
             /* Logged In: Profile Icon Avatar with Dropdown */
-            <div className="relative">
+            <div className="relative" ref={profileMenuRef}>
               <motion.button
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}

@@ -23,6 +23,10 @@ export function useMediaStream(): UseMediaStreamReturn {
   const [isLoadingMedia, setIsLoadingMedia] = useState<boolean>(false);
 
   const streamRef = useRef<MediaStream | null>(null);
+  const cameraOnRef = useRef(cameraOn);
+  const micOnRef = useRef(micOn);
+  cameraOnRef.current = cameraOn;
+  micOnRef.current = micOn;
 
   const requestMediaPermissions = useCallback(async (): Promise<MediaStream | null> => {
     setIsLoadingMedia(true);
@@ -55,9 +59,9 @@ export function useMediaStream(): UseMediaStreamReturn {
       streamRef.current = stream;
       setLocalStream(stream);
 
-      // Apply initial track states
-      stream.getVideoTracks().forEach(track => (track.enabled = cameraOn));
-      stream.getAudioTracks().forEach(track => (track.enabled = micOn));
+      // Apply initial track states using refs to avoid stale closure values
+      stream.getVideoTracks().forEach(track => (track.enabled = cameraOnRef.current));
+      stream.getAudioTracks().forEach(track => (track.enabled = micOnRef.current));
 
       setIsLoadingMedia(false);
       return stream;
@@ -76,7 +80,7 @@ export function useMediaStream(): UseMediaStreamReturn {
       setMediaError(friendlyMessage);
       return null;
     }
-  }, [facingMode, cameraOn, micOn]);
+  }, [facingMode]);
 
   const toggleCamera = useCallback(() => {
     if (streamRef.current) {

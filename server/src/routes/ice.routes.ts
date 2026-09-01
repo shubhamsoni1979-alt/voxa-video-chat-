@@ -17,9 +17,8 @@ const DEFAULT_STUN_SERVERS: IceServer[] = [
   { urls: 'stun:stun2.l.google.com:19302' }
 ];
 
-// Default Metered account configuration (fallback when env vars not set)
-const DEFAULT_METERED_APP_NAME = 'shubhamsoni979';
-const DEFAULT_METERED_API_KEY = 'FEOO3raJKACkUl4g08pNkACwVFSCtslK8DqjVOPRytywxuV8';
+// Metered credentials MUST be supplied via environment variables (METERED_APP_NAME, METERED_API_KEY).
+// Never hardcode API keys in source code.
 
 // Cache for generated credentials (valid 23h, refresh before expiry)
 let cachedCredential: {
@@ -48,8 +47,14 @@ const OPENRELAY_FALLBACK: IceServer[] = [
 
 router.get('/ice', async (_req: Request, res: Response) => {
   try {
-    const meteredAppName = config.meteredAppName || DEFAULT_METERED_APP_NAME;
-    const meteredApiKey  = config.meteredApiKey  || DEFAULT_METERED_API_KEY;
+    const meteredAppName = config.meteredAppName;
+    const meteredApiKey  = config.meteredApiKey;
+
+    // If no Metered credentials configured, skip to OpenRelay fallback
+    if (!meteredAppName || !meteredApiKey) {
+      console.warn('[Voxa Server] No METERED_APP_NAME / METERED_API_KEY configured. Using OpenRelay fallback.');
+      return res.json({ iceServers: [...DEFAULT_STUN_SERVERS, ...OPENRELAY_FALLBACK], hasTurn: true });
+    }
 
     const now = Date.now();
 

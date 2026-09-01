@@ -40,11 +40,17 @@ export const VideoChat: React.FC = () => {
     reportPartner
   } = useMatchmaking();
 
-  // Auto start matchmaking on mount
+  // Auto start matchmaking on mount, cleanup on unmount
+  // Refs ensure latest callbacks are used without re-triggering the effect
+  const startMatchmakingRef = useRef(startMatchmaking);
+  startMatchmakingRef.current = startMatchmaking;
+  const leaveChatRef = useRef(leaveChat);
+  leaveChatRef.current = leaveChat;
+
   useEffect(() => {
-    startMatchmaking();
+    startMatchmakingRef.current();
     return () => {
-      leaveChat();
+      leaveChatRef.current();
     };
   }, []);
 

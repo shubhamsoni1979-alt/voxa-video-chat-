@@ -26,9 +26,7 @@ export function useSocketStatus() {
     socket.on('disconnect', handleDisconnect);
     socket.on('connect_error', handleConnectError);
 
-    if (!socket.connected) {
-      socket.connect();
-    }
+    // Don't force-connect — socket has autoConnect: true and its own reconnection logic
     setIsConnected(socket.connected);
 
     const interval = setInterval(() => {

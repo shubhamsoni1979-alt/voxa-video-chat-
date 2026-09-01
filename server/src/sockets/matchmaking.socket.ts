@@ -44,7 +44,28 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket): void {
           logger.warn(`Partner socket [${result.partnerSocketId}] lost connection during match creation. Searching again.`);
           await roomService.closeRoom(result.room.roomId);
           socket.emit('searching_status', { searching: true, message: 'Finding someone new...' });
-          await matchmakingService.requestMatch(socket.id);
+
+          // Re-attempt match and handle the result (don't discard it)
+          const retryResult = await matchmakingService.requestMatch(socket.id);
+          if (retryResult.matched && retryResult.room && retryResult.partnerSocketId) {
+            const retryPartner = io.sockets.sockets.get(retryResult.partnerSocketId);
+            if (retryPartner && retryPartner.connected) {
+              socket.join(retryResult.room.roomId);
+              retryPartner.join(retryResult.room.roomId);
+              socket.emit('match_found', {
+                roomId: retryResult.room.roomId,
+                partnerSocketId: retryResult.partnerSocketId,
+                isPolite: false
+              });
+              retryPartner.emit('match_found', {
+                roomId: retryResult.room.roomId,
+                partnerSocketId: socket.id,
+                isPolite: true
+              });
+              logger.info(`Retry match dispatched for room: ${retryResult.room.roomId}`);
+            }
+          }
+          // If no retry match found, user was added to queue by requestMatch
         }
       }
     } catch (err: any) {

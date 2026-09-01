@@ -36,7 +36,7 @@ export const Home: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <Navbar onStartClick={handleStartRequest} />
+      <Navbar />
       <MarqueeBanner />
       
       <main className="flex-grow">

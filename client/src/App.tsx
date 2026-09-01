@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Home } from './pages/Home';
@@ -11,11 +11,14 @@ import { NotFound } from './pages/NotFound';
 const ProtectedVideoChatRoute: React.FC = () => {
   const { isLoggedIn, openLoginModal } = useAuth();
 
-  if (!isLoggedIn) {
-    // Open login modal and redirect to home
-    setTimeout(() => {
+  // Side effects must be in useEffect, not in the render body
+  useEffect(() => {
+    if (!isLoggedIn) {
       openLoginModal('/chat');
-    }, 100);
+    }
+  }, [isLoggedIn, openLoginModal]);
+
+  if (!isLoggedIn) {
     return <Navigate to="/" replace />;
   }
 

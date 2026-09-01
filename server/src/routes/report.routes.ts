@@ -15,6 +15,9 @@ interface ReportRecord {
   timestamp: string;
 }
 
+// WARNING: Reports are stored in-memory only and will be lost on server restart.
+// TODO: Persist reports to a database (e.g., PostgreSQL, MongoDB) for production use.
+const MAX_REPORTS_IN_MEMORY = 1000;
 const reports: ReportRecord[] = [];
 
 // Helper to sanitize strings
@@ -50,6 +53,12 @@ router.post('/reports', reportRateLimiter, (req: Request, res: Response) => {
     };
 
     reports.push(reportRecord);
+
+    // Prevent unbounded memory growth — keep only the most recent reports
+    if (reports.length > MAX_REPORTS_IN_MEMORY) {
+      reports.splice(0, reports.length - MAX_REPORTS_IN_MEMORY);
+    }
+
     logger.info(`User report received: Reason [${reason}] against target [${reportedSocketId}] in room [${roomId}]`);
 
     return res.status(200).json({ success: true, message: 'Report submitted successfully. Thank you for helping keep Voxa safe.' });
