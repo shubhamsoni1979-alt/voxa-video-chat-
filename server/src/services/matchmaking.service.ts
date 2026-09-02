@@ -6,7 +6,9 @@ import { logger } from '../utils/logger';
 class MatchmakingService {
   async requestMatch(socketId: string): Promise<{ matched: boolean; room?: RoomState; partnerSocketId?: string; isPolite?: boolean }> {
     const session = await redisService.getSession(socketId);
+    const userIp = session ? session.ip : 'unknown';
     const blockedSockets = session ? session.blockedSockets : [];
+    const blockedIps = session ? session.blockedIps : [];
 
     // If user is already in a room, leave it first
     if (session && session.currentRoomId) {
@@ -14,7 +16,7 @@ class MatchmakingService {
     }
 
     // Try to find an existing compatible waiting user in queue
-    const match = await redisService.findMatchForUser(socketId, blockedSockets);
+    const match = await redisService.findMatchForUser(socketId, userIp, blockedSockets, blockedIps);
 
     if (match) {
       // Compatibility confirmed! Create a room
@@ -33,8 +35,10 @@ class MatchmakingService {
     // No compatible user waiting right now. Put user into the queue
     const queueUser: MatchmakingUser = {
       socketId,
+      ip: userIp,
       timestamp: Date.now(),
-      blockedSockets
+      blockedSockets,
+      blockedIps
     };
 
     await redisService.addToQueue(queueUser);

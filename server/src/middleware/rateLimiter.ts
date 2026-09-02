@@ -14,6 +14,12 @@ export const reportRateLimiter = rateLimit({
   message: { error: 'Report rate limit exceeded. Please wait a moment.' }
 });
 
+export const iceRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 5, // Limit 5 ICE requests per minute per IP
+  message: { error: 'ICE credential request rate limit exceeded. Please slow down.' }
+});
+
 // Socket event rate limiter map (Socket ID -> timestamp list)
 const socketEventTracker = new Map<string, number[]>();
 const MAX_TRACKED_SOCKETS = 10000;

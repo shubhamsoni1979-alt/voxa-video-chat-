@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { getSocket } from '../services/socket';
 import { getIceServers } from '../utils/config';
 import { PeerMediaState } from '../types';
@@ -10,6 +10,7 @@ export interface UseWebRTCReturn {
   initPeerConnection: (roomId: string, isPolite: boolean, localStream: MediaStream) => Promise<void>;
   closePeerConnection: () => void;
   sendMediaState: (cameraOn: boolean, micOn: boolean) => void;
+  replaceTrack: (newTrack: MediaStreamTrack, kind: 'audio' | 'video') => Promise<void>;
 }
 
 export function useWebRTC(): UseWebRTCReturn {
@@ -28,7 +29,7 @@ export function useWebRTC(): UseWebRTCReturn {
   const disconnectedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cleanupSocketListenersRef = useRef<(() => void) | null>(null);
 
-  const socket = getSocket();
+  const socket = useMemo(() => getSocket(), []);
 
   const closePeerConnection = useCallback(() => {
     // Clean up socket signaling listeners first
@@ -62,6 +63,21 @@ export function useWebRTC(): UseWebRTCReturn {
   const sendMediaState = useCallback((cameraOn: boolean, micOn: boolean) => {
     socket.emit('media_state', { cameraOn, micOn });
   }, [socket]);
+
+  const replaceTrack = useCallback(async (newTrack: MediaStreamTrack, kind: 'audio' | 'video') => {
+    const pc = peerConnectionRef.current;
+    if (!pc) return;
+    const senders = pc.getSenders();
+    const sender = senders.find(s => s.track?.kind === kind);
+    if (sender) {
+      try {
+        await sender.replaceTrack(newTrack);
+        console.log(`[Voxa WebRTC] Replaced ${kind} track on active peer connection.`);
+      } catch (err) {
+        console.error(`[Voxa WebRTC] Failed to replace ${kind} track:`, err);
+      }
+    }
+  }, []);
 
   const triggerIceRestart = useCallback(async () => {
     if (isPoliteRef.current) return; // Only impolite peer initiates ICE restarts
@@ -141,12 +157,14 @@ export function useWebRTC(): UseWebRTCReturn {
       pc.addTrack(track, localStream);
     });
 
-    // 2. Handle incoming remote tracks
+    // 2. Handle incoming remote tracks (Bug #27 fix)
     pc.ontrack = (event) => {
-      event.streams[0].getTracks().forEach(track => {
-        remoteStreamInstance.addTrack(track);
-      });
-      setRemoteStream(new MediaStream(remoteStreamInstance.getTracks()));
+      if (event.streams && event.streams[0]) {
+        setRemoteStream(event.streams[0]);
+      } else {
+        remoteStreamInstance.addTrack(event.track);
+        setRemoteStream(new MediaStream(remoteStreamInstance.getTracks()));
+      }
       setConnectionState('connected');
     };
 
@@ -365,6 +383,7 @@ export function useWebRTC(): UseWebRTCReturn {
     peerMediaState,
     initPeerConnection,
     closePeerConnection,
-    sendMediaState
+    sendMediaState,
+    replaceTrack
   };
 }

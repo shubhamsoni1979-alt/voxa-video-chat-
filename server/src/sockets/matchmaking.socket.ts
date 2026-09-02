@@ -63,6 +63,10 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket): void {
                 isPolite: true
               });
               logger.info(`Retry match dispatched for room: ${retryResult.room.roomId}`);
+            } else {
+              // Retry partner also lost connection - cleanup room (Bug #15 fix)
+              logger.warn(`Retry partner [${retryResult.partnerSocketId}] also lost connection. Closing retry room.`);
+              await roomService.closeRoom(retryResult.room.roomId);
             }
           }
           // If no retry match found, user was added to queue by requestMatch
@@ -75,6 +79,8 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket): void {
   });
 
   socket.on('cancel_search', async () => {
+    if (!checkSocketRateLimit(socket.id, 10)) return; // Bug #8 fix
+
     try {
       await matchmakingService.cancelSearch(socket.id);
       socket.emit('searching_status', { searching: false, message: 'Search cancelled.' });
@@ -87,12 +93,14 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket): void {
     if (!checkSocketRateLimit(socket.id)) return;
 
     try {
-      // Find room socket is currently in and notify partner
+      // Find room socket is currently in and notify partner (Bug #14 fix)
       const rooms = Array.from(socket.rooms).filter(r => r !== socket.id);
       for (const roomId of rooms) {
-        socket.to(roomId).emit('peer_disconnected', { reason: 'partner_next' });
         socket.leave(roomId);
-        await roomService.closeRoom(roomId);
+        const closedRoom = await roomService.closeRoom(roomId);
+        if (closedRoom) {
+          socket.to(roomId).emit('peer_disconnected', { reason: 'partner_next' });
+        }
       }
 
       // Immediately trigger find_match

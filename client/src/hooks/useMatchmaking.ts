@@ -24,7 +24,7 @@ export function useMatchmaking() {
     requestMediaPermissions,
     toggleCamera,
     toggleMicrophone,
-    flipCamera,
+    flipCamera: baseFlipCamera,
     stopMediaStream
   } = useMediaStream();
 
@@ -34,12 +34,26 @@ export function useMatchmaking() {
     peerMediaState,
     initPeerConnection,
     closePeerConnection,
-    sendMediaState
+    sendMediaState,
+    replaceTrack
   } = useWebRTC();
 
   const socket = getSocket();
   const matchDataRef = useRef<MatchData | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+
+  const initPeerConnectionRef = useRef(initPeerConnection);
+  initPeerConnectionRef.current = initPeerConnection;
+  const closePeerConnectionRef = useRef(closePeerConnection);
+  closePeerConnectionRef.current = closePeerConnection;
+  const requestMediaPermissionsRef = useRef(requestMediaPermissions);
+  requestMediaPermissionsRef.current = requestMediaPermissions;
+
+  const flipCamera = useCallback(async () => {
+    await baseFlipCamera((newTrack, kind) => {
+      replaceTrack(newTrack, kind);
+    });
+  }, [baseFlipCamera, replaceTrack]);
 
   // Sync localStream ref
   useEffect(() => {
@@ -61,6 +75,7 @@ export function useMatchmaking() {
   // Sync WebRTC connection state to client state
   useEffect(() => {
     let connectingTimer: ReturnType<typeof setTimeout> | null = null;
+    let fallbackTimeoutTimer: ReturnType<typeof setTimeout> | null = null;
 
     if (rtcState === 'connected') {
       setConnectionState('connected');
@@ -72,6 +87,15 @@ export function useMatchmaking() {
       connectingTimer = setTimeout(() => {
         setStatusMessage('Establishing media connection...');
       }, 7000);
+
+      // 15-second hard timeout for stuck/firewalled WebRTC connections (Audit Fix)
+      fallbackTimeoutTimer = setTimeout(() => {
+        if (connectionStateRef.current === 'connecting') {
+          closePeerConnectionRef.current();
+          setConnectionState('partner_disconnected');
+          setStatusMessage('Media connection timed out. Finding someone new...');
+        }
+      }, 15000);
     } else if (rtcState === 'failed' || rtcState === 'disconnected') {
       // Use ref to read the latest connectionState without adding it to deps
       const currentState = connectionStateRef.current;
@@ -83,6 +107,7 @@ export function useMatchmaking() {
 
     return () => {
       if (connectingTimer) clearTimeout(connectingTimer);
+      if (fallbackTimeoutTimer) clearTimeout(fallbackTimeoutTimer);
     };
   }, [rtcState]);
 
@@ -227,7 +252,7 @@ export function useMatchmaking() {
       setConnectionState('matched');
       setStatusMessage("Someone's here! Connecting video...");
 
-      const stream = localStreamRef.current ?? (await requestMediaPermissions());
+      const stream = localStreamRef.current ?? (await requestMediaPermissionsRef.current());
 
       if (!stream) {
         setConnectionState('error');
@@ -238,7 +263,7 @@ export function useMatchmaking() {
       localStreamRef.current = stream;
       setConnectionState('connecting');
 
-      await initPeerConnection(data.roomId, data.isPolite, stream);
+      await initPeerConnectionRef.current(data.roomId, data.isPolite, stream);
     };
 
     const handleChatMessage = (data: { text: string; id: string; timestamp: number }) => {
@@ -255,7 +280,7 @@ export function useMatchmaking() {
     };
 
     const handlePeerDisconnected = (data: { reason: string }) => {
-      closePeerConnection();
+      closePeerConnectionRef.current();
       setConnectionState('partner_disconnected');
       if (data.reason === 'blocked') {
         setStatusMessage('Partner blocked.');
@@ -281,7 +306,7 @@ export function useMatchmaking() {
       socket.off('peer_disconnected', handlePeerDisconnected);
       socket.off('error_message', handleErrorMessage);
     };
-  }, [socket, requestMediaPermissions, initPeerConnection, closePeerConnection]);
+  }, [socket]);
 
   return {
     connectionState,

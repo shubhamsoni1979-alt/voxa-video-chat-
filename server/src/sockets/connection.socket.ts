@@ -11,11 +11,21 @@ export function registerConnectionHandlers(io: Server): void {
   io.on('connection', async (socket: Socket) => {
     logger.info(`Socket connected: [${socket.id}]`);
 
+    const forwardedFor = socket.handshake.headers['x-forwarded-for'];
+    const clientIp = typeof forwardedFor === 'string'
+      ? forwardedFor.split(',')[0].trim()
+      : socket.handshake.address || 'unknown';
+
+    // Retrieve any existing persistent blocked IPs for this IP address
+    const existingBlockedIps = await redisService.getBlockedIpsForIp(clientIp);
+
     // Create session
     const session: UserSession = {
       socketId: socket.id,
+      ip: clientIp,
       joinedAt: Date.now(),
       blockedSockets: [],
+      blockedIps: existingBlockedIps,
       currentRoomId: null,
       cameraOn: true,
       micOn: true

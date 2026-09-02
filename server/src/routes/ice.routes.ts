@@ -1,6 +1,8 @@
 
 import { Router, Request, Response } from 'express';
 import { config } from '../config/env';
+import { iceRateLimiter } from '../middleware/rateLimiter';
+import { logger } from '../utils/logger';
 
 const router = Router();
 
@@ -45,14 +47,14 @@ const OPENRELAY_FALLBACK: IceServer[] = [
   { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
 ];
 
-router.get('/ice', async (_req: Request, res: Response) => {
+router.get('/ice', iceRateLimiter, async (_req: Request, res: Response) => {
   try {
     const meteredAppName = config.meteredAppName;
     const meteredApiKey  = config.meteredApiKey;
 
     // If no Metered credentials configured, skip to OpenRelay fallback
     if (!meteredAppName || !meteredApiKey) {
-      console.warn('[Voxa Server] No METERED_APP_NAME / METERED_API_KEY configured. Using OpenRelay fallback.');
+      logger.warn('[Voxa Server] No METERED_APP_NAME / METERED_API_KEY configured. Using OpenRelay fallback.');
       return res.json({ iceServers: [...DEFAULT_STUN_SERVERS, ...OPENRELAY_FALLBACK], hasTurn: true });
     }
 
@@ -81,23 +83,23 @@ router.get('/ice', async (_req: Request, res: Response) => {
             iceServers: turnServers,
             expiresAt: now + 23 * 60 * 60 * 1000 // cache 23h (1h before expiry)
           };
-          console.log('[Voxa Server] Generated fresh Metered TURN credential:', cred.username);
+          logger.info(`[Voxa Server] Generated fresh Metered TURN credential session.`);
           return res.json({ iceServers: [...DEFAULT_STUN_SERVERS, ...turnServers], hasTurn: true });
         }
       } else {
         const errBody = await postRes.text();
-        console.warn(`[Voxa Server] Metered credential POST failed ${postRes.status}: ${errBody}`);
+        logger.warn(`[Voxa Server] Metered credential POST failed ${postRes.status}: ${errBody}`);
       }
     } catch (err) {
-      console.warn('[Voxa Server] Error calling Metered POST API:', (err as Error).message);
+      logger.warn(`[Voxa Server] Error calling Metered POST API: ${(err as Error).message}`);
     }
 
     // Last resort: OpenRelay public server
-    console.warn('[Voxa Server] Falling back to OpenRelay public TURN server');
+    logger.warn('[Voxa Server] Falling back to OpenRelay public TURN server');
     return res.json({ iceServers: [...DEFAULT_STUN_SERVERS, ...OPENRELAY_FALLBACK], hasTurn: true });
 
   } catch (error) {
-    console.error('[Voxa Server] ICE route internal error:', error);
+    logger.error('[Voxa Server] ICE route internal error:', error);
     return res.status(500).json({ iceServers: DEFAULT_STUN_SERVERS, hasTurn: false });
   }
 });

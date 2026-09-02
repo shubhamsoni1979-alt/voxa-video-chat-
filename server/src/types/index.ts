@@ -1,7 +1,9 @@
 export interface UserSession {
   socketId: string;
+  ip: string;
   joinedAt: number;
   blockedSockets: string[];
+  blockedIps: string[];
   currentRoomId: string | null;
   cameraOn: boolean;
   micOn: boolean;
@@ -9,8 +11,10 @@ export interface UserSession {
 
 export interface MatchmakingUser {
   socketId: string;
+  ip: string;
   timestamp: number;
   blockedSockets: string[];
+  blockedIps: string[];
 }
 
 export interface RoomState {
@@ -59,7 +63,6 @@ export interface ClientToServerEvents {
   answer: (data: { roomId: string; sdp: RTCSessionDescriptionInit }) => void;
   ice_candidate: (data: { roomId: string; candidate: RTCIceCandidateInit }) => void;
   media_state: (data: { cameraOn: boolean; micOn: boolean }) => void;
-  report_user: (payload: UserReportPayload) => void;
   block_user: (data: { targetSocketId: string; roomId: string }) => void;
   leave_room: () => void;
 }

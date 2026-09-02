@@ -11,9 +11,30 @@ class RedisService {
   private memoryQueue: MatchmakingUser[] = [];
   private memorySessions: Map<string, UserSession> = new Map();
   private memoryRooms: Map<string, RoomState> = new Map();
+  private memoryIpBlocklist: Map<string, Set<string>> = new Map();
 
   constructor() {
     this.initRedis();
+    this.startPeriodicSweeper();
+  }
+
+  // Periodic sweeper to prevent unbounded in-memory map growth (Bug #11 fix)
+  private startPeriodicSweeper() {
+    setInterval(() => {
+      const now = Date.now();
+      // Clean stale sessions older than 1 hour
+      for (const [socketId, session] of this.memorySessions.entries()) {
+        if (now - session.joinedAt > 3600000) {
+          this.memorySessions.delete(socketId);
+        }
+      }
+      // Clean stale rooms older than 2 hours
+      for (const [roomId, room] of this.memoryRooms.entries()) {
+        if (now - room.createdAt > 7200000) {
+          this.memoryRooms.delete(roomId);
+        }
+      }
+    }, 300000); // Sweep every 5 minutes
   }
 
   private initRedis() {
@@ -98,8 +119,12 @@ class RedisService {
 
   // --- Queue Management ---
   async addToQueue(user: MatchmakingUser): Promise<void> {
-    // Remove duplicate entry if exists
+    // Remove duplicate entry if exists (in memory & Redis - Bug #9 fix)
     this.memoryQueue = this.memoryQueue.filter(u => u.socketId !== user.socketId);
+    if (this.isRedisConnected && this.redisClient) {
+      await this.removeFromQueue(user.socketId);
+    }
+
     this.memoryQueue.push(user);
 
     if (this.isRedisConnected && this.redisClient) {
@@ -125,16 +150,31 @@ class RedisService {
     }
   }
 
-  async findMatchForUser(userSocketId: string, blockedSockets: string[]): Promise<MatchmakingUser | null> {
+  async findMatchForUser(userSocketId: string, userIp: string, blockedSockets: string[], blockedIps: string[]): Promise<MatchmakingUser | null> {
     // Check in-memory queue first or Redis
     for (let i = 0; i < this.memoryQueue.length; i++) {
       const candidate = this.memoryQueue[i];
-      if (candidate.socketId !== userSocketId && !blockedSockets.includes(candidate.socketId)) {
-        // Remove candidate from queue
-        this.memoryQueue.splice(i, 1);
-        await this.removeFromQueue(candidate.socketId);
-        return candidate;
+
+      // Check self-match
+      if (candidate.socketId === userSocketId) continue;
+
+      // Check requester's blocklist against candidate (socket & IP)
+      if (blockedSockets.includes(candidate.socketId) || (candidate.ip && blockedIps.includes(candidate.ip))) {
+        continue;
       }
+
+      // Check candidate's blocklist against requester (socket & IP - Bug #13 fix)
+      if (
+        (candidate.blockedSockets && candidate.blockedSockets.includes(userSocketId)) ||
+        (candidate.blockedIps && candidate.blockedIps.includes(userIp))
+      ) {
+        continue;
+      }
+
+      // Compatibility confirmed! Remove candidate from queue
+      this.memoryQueue.splice(i, 1);
+      await this.removeFromQueue(candidate.socketId);
+      return candidate;
     }
     return null;
   }
@@ -177,15 +217,49 @@ class RedisService {
     }
   }
 
-  // --- User Blocklist Management ---
+  // --- User Blocklist Management (Bugs #12, #13 fixes) ---
   async addBlockedUser(userSocketId: string, blockedSocketId: string): Promise<void> {
     const session = await this.getSession(userSocketId);
+    const blockedSession = await this.getSession(blockedSocketId);
+
     if (session) {
       if (!session.blockedSockets.includes(blockedSocketId)) {
         session.blockedSockets.push(blockedSocketId);
-        await this.setSession(session);
       }
+
+      if (blockedSession && blockedSession.ip) {
+        if (!session.blockedIps.includes(blockedSession.ip)) {
+          session.blockedIps.push(blockedSession.ip);
+        }
+
+        // Record in memory IP blocklist
+        let userIpBlocks = this.memoryIpBlocklist.get(session.ip) || new Set<string>();
+        userIpBlocks.add(blockedSession.ip);
+        this.memoryIpBlocklist.set(session.ip, userIpBlocks);
+
+        // Record in Redis set
+        if (this.isRedisConnected && this.redisClient) {
+          try {
+            await this.redisClient.sadd(`blocked_ips:${session.ip}`, blockedSession.ip);
+          } catch (e) {}
+        }
+      }
+
+      await this.setSession(session);
     }
+  }
+
+  async getBlockedIpsForIp(ip: string): Promise<string[]> {
+    const memSet = this.memoryIpBlocklist.get(ip);
+    const memList = memSet ? Array.from(memSet) : [];
+
+    if (this.isRedisConnected && this.redisClient) {
+      try {
+        const redisList = await this.redisClient.smembers(`blocked_ips:${ip}`);
+        return Array.from(new Set([...memList, ...redisList]));
+      } catch (e) {}
+    }
+    return memList;
   }
 }
 

@@ -89,6 +89,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({ state, messa
   return (
     <div className="flex items-center space-x-1.5 sm:space-x-2.5 glass-card px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full border border-white/10 text-[10px] sm:text-xs shadow-md max-w-[170px] sm:max-w-none shrink-0">
       <span className={`w-2 h-2 rounded-full shrink-0 ${config.dotColor}`}></span>
+      <Icon className={`w-3 h-3 text-slate-300 shrink-0 ${config.spin ? 'animate-spin' : ''}`} />
       <span className="font-bold tracking-wider font-outfit text-white truncate">{config.label}</span>
       {config.subtext && (
         <span className="hidden sm:inline text-slate-400 border-l border-slate-700 pl-2 font-normal truncate">

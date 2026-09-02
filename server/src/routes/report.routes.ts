@@ -1,4 +1,6 @@
 import { Router, Request, Response } from 'express';
+import fs from 'fs';
+import path from 'path';
 import { reportRateLimiter } from '../middleware/rateLimiter';
 import { logger } from '../utils/logger';
 import { config } from '../config/env';
@@ -15,10 +17,9 @@ interface ReportRecord {
   timestamp: string;
 }
 
-// WARNING: Reports are stored in-memory only and will be lost on server restart.
-// TODO: Persist reports to a database (e.g., PostgreSQL, MongoDB) for production use.
 const MAX_REPORTS_IN_MEMORY = 1000;
 const reports: ReportRecord[] = [];
+const REPORTS_LOG_PATH = path.resolve(process.cwd(), 'reports.log');
 
 // Helper to sanitize strings
 function sanitizeString(str: any, maxLen = 300): string {
@@ -57,6 +58,13 @@ router.post('/reports', reportRateLimiter, (req: Request, res: Response) => {
     // Prevent unbounded memory growth — keep only the most recent reports
     if (reports.length > MAX_REPORTS_IN_MEMORY) {
       reports.splice(0, reports.length - MAX_REPORTS_IN_MEMORY);
+    }
+
+    // File-based persistence (Bug #21 fix)
+    try {
+      fs.appendFileSync(REPORTS_LOG_PATH, JSON.stringify(reportRecord) + '\n', 'utf8');
+    } catch (fsErr: any) {
+      logger.warn(`Failed to write report log to disk: ${fsErr?.message}`);
     }
 
     logger.info(`User report received: Reason [${reason}] against target [${reportedSocketId}] in room [${roomId}]`);

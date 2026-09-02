@@ -10,7 +10,7 @@ export interface UseMediaStreamReturn {
   requestMediaPermissions: () => Promise<MediaStream | null>;
   toggleCamera: () => void;
   toggleMicrophone: () => void;
-  flipCamera: () => Promise<void>;
+  flipCamera: (onTrackChanged?: (track: MediaStreamTrack, kind: 'audio' | 'video') => void) => Promise<void>;
   stopMediaStream: () => void;
 }
 
@@ -108,7 +108,7 @@ export function useMediaStream(): UseMediaStreamReturn {
     }
   }, [micOn]);
 
-  const flipCamera = useCallback(async () => {
+  const flipCamera = useCallback(async (onTrackChanged?: (track: MediaStreamTrack, kind: 'audio' | 'video') => void) => {
     const nextFacing = facingMode === 'user' ? 'environment' : 'user';
     setFacingMode(nextFacing);
 
@@ -121,15 +121,26 @@ export function useMediaStream(): UseMediaStreamReturn {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: nextFacing },
-        audio: micOn
+        audio: { echoCancellation: true, noiseSuppression: true }
       });
       streamRef.current = stream;
       setLocalStream(stream);
-      stream.getVideoTracks().forEach(t => (t.enabled = cameraOn));
+
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = cameraOnRef.current;
+        if (onTrackChanged) onTrackChanged(videoTrack, 'video');
+      }
+
+      const audioTrack = stream.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = micOnRef.current;
+        if (onTrackChanged) onTrackChanged(audioTrack, 'audio');
+      }
     } catch (err) {
       setMediaError('Could not switch camera.');
     }
-  }, [facingMode, cameraOn, micOn]);
+  }, [facingMode]);
 
   const stopMediaStream = useCallback(() => {
     if (streamRef.current) {
