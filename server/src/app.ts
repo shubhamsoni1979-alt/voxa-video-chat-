@@ -21,9 +21,14 @@ app.use('/api', apiRateLimiter);
 app.use('/api', reportRoutes);
 app.use('/api', iceRoutes);
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString(), env: config.nodeEnv });
+// Health check endpoints (supports both / and /health for Render/AWS probes)
+app.get(['/', '/health'], (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    message: 'Voxa Video Chat Server Live 🚀',
+    timestamp: new Date().toISOString(),
+    env: config.nodeEnv
+  });
 });
 
 // Create HTTP server

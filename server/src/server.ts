@@ -4,7 +4,7 @@ import { logger } from './utils/logger';
 
 const PORT = config.port;
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   logger.info(`==================================================`);
   logger.info(`🚀 VOXA Video Chat Server is running on port ${PORT}`);
   logger.info(`Environment: ${config.nodeEnv}`);
