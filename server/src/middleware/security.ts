@@ -6,10 +6,16 @@ export const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
 
+    const normalizedOrigin = origin.replace(/\/$/, '');
     const allowedOrigin = (config.clientUrl || '').replace(/\/$/, '');
 
-    // Allow exact configured client URL
-    if (allowedOrigin && origin === allowedOrigin) {
+    // Allow exact configured client URL (normalized for trailing slashes)
+    if (allowedOrigin && (normalizedOrigin === allowedOrigin || origin === allowedOrigin)) {
+      return callback(null, true);
+    }
+
+    // Allow official Vercel deployment subdomains (*.vercel.app)
+    if (normalizedOrigin.endsWith('.vercel.app')) {
       return callback(null, true);
     }
 
@@ -18,7 +24,7 @@ export const corsOptions: cors.CorsOptions = {
       return callback(null, true);
     }
 
-    // Strict URL parsing for localhost & development checks (Bug #5 fix)
+    // Strict URL parsing for localhost & development checks
     try {
       const parsedUrl = new URL(origin);
       if (
