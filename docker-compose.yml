@@ -24,8 +24,8 @@ services:
       - NODE_ENV=production
       - REDIS_URL=redis://redis:6379
       - CLIENT_URL=${CLIENT_URL:-http://localhost:5173}
-      - METERED_APP_NAME=${METERED_APP_NAME:-}
-      - METERED_API_KEY=${METERED_API_KEY:-}
+      - CF_TURN_TOKEN_ID=${CF_TURN_TOKEN_ID:-}
+      - CF_TURN_API_TOKEN=${CF_TURN_API_TOKEN:-}
     depends_on:
       - redis
     restart: always

@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Home } from './pages/Home';
 import { VideoChat } from './pages/VideoChat';
+import { GroupCall } from './pages/GroupCall';
 import { Safety } from './pages/Safety';
 import { Privacy } from './pages/Privacy';
 import { Terms } from './pages/Terms';
@@ -32,6 +33,8 @@ export const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/chat" element={<ProtectedVideoChatRoute />} />
+          <Route path="/group" element={<GroupCall />} />
+          <Route path="/group/:roomId" element={<GroupCall />} />
           <Route path="/safety" element={<Safety />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />

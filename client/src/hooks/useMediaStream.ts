@@ -45,23 +45,36 @@ export function useMediaStream(): UseMediaStreamReturn {
 
       const constraints: MediaStreamConstraints = {
         video: {
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
+          width: { ideal: 1280, max: 1280 },
+          height: { ideal: 720, max: 720 },
+          frameRate: { ideal: 30, max: 30 },
           facingMode: facingMode
         },
         audio: {
           echoCancellation: true,
-          noiseSuppression: true
-        }
+          noiseSuppression: true,
+          autoGainControl: true,
+          latency: 0
+        } as MediaTrackConstraints
       };
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
       setLocalStream(stream);
 
-      // Apply initial track states using refs to avoid stale closure values
-      stream.getVideoTracks().forEach(track => (track.enabled = cameraOnRef.current));
-      stream.getAudioTracks().forEach(track => (track.enabled = micOnRef.current));
+      // Set low-latency content hints for real-time streaming
+      stream.getVideoTracks().forEach(track => {
+        track.enabled = cameraOnRef.current;
+        if ('contentHint' in track) {
+          track.contentHint = 'motion';
+        }
+      });
+      stream.getAudioTracks().forEach(track => {
+        track.enabled = micOnRef.current;
+        if ('contentHint' in track) {
+          track.contentHint = 'speech';
+        }
+      });
 
       setIsLoadingMedia(false);
       return stream;

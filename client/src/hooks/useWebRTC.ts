@@ -140,7 +140,7 @@ export function useWebRTC(): UseWebRTCReturn {
 
     const pc = new RTCPeerConnection({
       iceServers,
-      iceCandidatePoolSize: 0,
+      iceCandidatePoolSize: 10,
       bundlePolicy: 'max-bundle',
       rtcpMuxPolicy: 'require'
     });
@@ -152,13 +152,37 @@ export function useWebRTC(): UseWebRTCReturn {
     const remoteStreamInstance = new MediaStream();
     setRemoteStream(remoteStreamInstance);
 
-    // 1. Add local media tracks
+    // 1. Add local media tracks & optimize sender for real-time motion
     localStream.getTracks().forEach(track => {
-      pc.addTrack(track, localStream);
+      const sender = pc.addTrack(track, localStream);
+      if (track.kind === 'video') {
+        track.contentHint = 'motion';
+        try {
+          const params = sender.getParameters();
+          if (params.encodings && params.encodings.length > 0) {
+            params.encodings[0].maxBitrate = 1500000;
+            params.encodings[0].networkPriority = 'high';
+            params.degradationPreference = 'maintain-framerate';
+            sender.setParameters(params).catch(() => {});
+          }
+        } catch {}
+      } else if (track.kind === 'audio') {
+        track.contentHint = 'speech';
+      }
     });
 
-    // 2. Handle incoming remote tracks (Bug #27 fix)
+    // 2. Handle incoming remote tracks with zero-delay playout
     pc.ontrack = (event) => {
+      // Force zero buffer delay on receiver
+      if (event.receiver) {
+        if ('playoutDelayHint' in event.receiver) {
+          (event.receiver as any).playoutDelayHint = 0;
+        }
+        if ('jitterBufferDelayHint' in event.receiver) {
+          (event.receiver as any).jitterBufferDelayHint = 0;
+        }
+      }
+
       if (event.streams && event.streams[0]) {
         setRemoteStream(event.streams[0]);
       } else {

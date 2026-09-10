@@ -108,21 +108,29 @@
   box-shadow: 0 15px 30px rgba(139, 0, 20, 0.5);
 }
 
-/* Custom Scrollbar */
+/* Sleek, Modern Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #FFFFFF;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #B8001C;
+  background: rgba(255, 255, 255, 0.18);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #0A0A0A;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+body::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+body::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.4);
 }

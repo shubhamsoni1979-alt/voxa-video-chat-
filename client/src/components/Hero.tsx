@@ -1,6 +1,7 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Video, ArrowRight, Play, ShieldCheck, Zap, Globe, Sparkles, Volume2 } from 'lucide-react';
+import { Video, ArrowRight, Play, ShieldCheck, Zap, Globe, Sparkles, Volume2, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface HeroProps {
@@ -9,6 +10,7 @@ interface HeroProps {
 }
 
 export const Hero: React.FC<HeroProps> = ({ onStartClick, onHowItWorksClick }) => {
+  const navigate = useNavigate();
   const { isLoggedIn, openLoginModal } = useAuth();
 
   const handleStart = () => {
@@ -81,10 +83,20 @@ export const Hero: React.FC<HeroProps> = ({ onStartClick, onHowItWorksClick }) =
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={onHowItWorksClick}
-                className="w-full sm:w-auto min-h-[48px] bg-slate-100 hover:bg-slate-200 text-slate-900 text-sm sm:text-base font-semibold px-5 sm:px-6 py-3.5 sm:py-4 rounded-xl flex items-center justify-center space-x-2 transition-colors border border-slate-300 shrink-0"
+                onClick={() => navigate('/group')}
+                className="w-full sm:w-auto min-h-[48px] bg-slate-100 hover:bg-slate-200 text-slate-900 text-sm sm:text-base font-bold px-5 sm:px-6 py-3.5 sm:py-4 rounded-xl flex items-center justify-center space-x-2 transition-colors border border-slate-300 shrink-0"
               >
-                <Play className="w-4 h-4 fill-slate-800" />
+                <Users className="w-4 h-4 text-[#B8001C]" />
+                <span>Group Call (2–6)</span>
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={onHowItWorksClick}
+                className="w-full sm:w-auto min-h-[48px] bg-slate-50 hover:bg-slate-100 text-slate-700 text-sm sm:text-base font-semibold px-4 sm:px-5 py-3.5 sm:py-4 rounded-xl flex items-center justify-center space-x-2 transition-colors border border-slate-200 shrink-0"
+              >
+                <Play className="w-4 h-4 fill-slate-600" />
                 <span>How It Works</span>
               </motion.button>
             </div>

@@ -1,9 +1,11 @@
 import { Socket, Server } from 'socket.io';
 import { redisService } from '../services/redis.service';
 import { roomService } from '../services/room.service';
+import { groupRoomService } from '../services/group-room.service';
 import { clearSocketRateLimit } from '../middleware/rateLimiter';
 import { registerMatchmakingHandlers } from './matchmaking.socket';
 import { registerSignalingHandlers } from './signaling.socket';
+import { registerGroupHandlers } from './group.socket';
 import { logger } from '../utils/logger';
 import { UserSession } from '../types';
 
@@ -36,6 +38,7 @@ export function registerConnectionHandlers(io: Server): void {
     // Register event sub-handlers
     registerMatchmakingHandlers(io, socket);
     registerSignalingHandlers(io, socket);
+    registerGroupHandlers(io, socket);
 
     // Disconnect cleanup
     socket.on('disconnect', async (reason) => {
@@ -44,11 +47,19 @@ export function registerConnectionHandlers(io: Server): void {
       // 1. Remove from matchmaking queue if waiting
       await redisService.removeFromQueue(socket.id);
 
-      // 2. Notify partner and close room if in an active room
+      // 2. Notify room participants and close/leave room if in an active room
       const userSession = await redisService.getSession(socket.id);
       if (userSession && userSession.currentRoomId) {
-        io.to(userSession.currentRoomId).emit('peer_disconnected', { reason: 'partner_disconnected' });
-        await roomService.closeRoom(userSession.currentRoomId);
+        if (userSession.currentRoomId.startsWith('group_')) {
+          await groupRoomService.leaveGroupRoom(userSession.currentRoomId, socket.id);
+          io.to(userSession.currentRoomId).emit('participant_left', {
+            socketId: socket.id,
+            reason: 'disconnected'
+          });
+        } else {
+          io.to(userSession.currentRoomId).emit('peer_disconnected', { reason: 'partner_disconnected' });
+          await roomService.closeRoom(userSession.currentRoomId);
+        }
       }
 
       // 3. Remove session and clear rate limit tracking

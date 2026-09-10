@@ -9,7 +9,7 @@ server.listen(PORT, '0.0.0.0', () => {
   logger.info(`🚀 VOXA Video Chat Server is running on port ${PORT}`);
   logger.info(`Environment: ${config.nodeEnv}`);
   logger.info(`Client Origin: ${config.clientUrl}`);
-  logger.info(`STUN Server: ${config.stunServer}`);
+  logger.info(`Cloudflare TURN: ${config.cfTurnTokenId ? 'Configured ✅' : 'Not configured ❌'}`);
   logger.info(`==================================================`);
 });
 

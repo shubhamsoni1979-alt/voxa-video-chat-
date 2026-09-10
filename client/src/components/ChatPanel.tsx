@@ -14,15 +14,19 @@ interface ChatPanelProps {
   onSendMessage: (text: string) => void;
   isConnected: boolean;
   onCloseMobile?: () => void;
+  title?: string;
+  statusText?: string;
 }
 
-const QUICK_EMOJIS = ['👋', '😂', '🔥', '❤️', '👏', '😍', '🕸️'];
+const QUICK_EMOJIS = ['👋', '😂', '🔥', '❤️', '👏', '😍', '✨'];
 
 export const ChatPanel: React.FC<ChatPanelProps> = ({
   messages,
   onSendMessage,
   isConnected,
-  onCloseMobile
+  onCloseMobile,
+  title = 'Live Text Chat',
+  statusText
 }) => {
   const [inputText, setInputText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -48,7 +52,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden font-sans select-text">
+    <div className="w-full h-full flex flex-col bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden font-sans select-text">
       
       {/* Chat Header */}
       <div className="px-4 py-3 bg-slate-950/80 border-b border-white/10 flex items-center justify-between shrink-0">
@@ -58,12 +62,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           </div>
           <div className="min-w-0">
             <h3 className="text-sm font-black font-heading text-white flex items-center gap-1.5 truncate">
-              Live Text Chat
+              {title}
             </h3>
             <div className="flex items-center space-x-1.5 text-[11px] font-medium truncate">
               <span className={`w-2 h-2 rounded-full shrink-0 ${isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'}`}></span>
               <span className={`truncate ${isConnected ? 'text-emerald-400' : 'text-slate-400'}`}>
-                {isConnected ? 'Peer Connected' : 'Waiting for Match...'}
+                {statusText || (isConnected ? 'Connected' : 'Waiting...')}
               </span>
             </div>
           </div>

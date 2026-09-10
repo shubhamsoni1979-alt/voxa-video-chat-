@@ -23,3 +23,29 @@ export interface UserReportData {
   reason: 'inappropriate' | 'harassment' | 'nudity' | 'hate' | 'spam' | 'other';
   details?: string;
 }
+
+export interface GroupRoomData {
+  roomId: string;
+  participants: string[];
+  hostSocketId?: string;
+}
+
+export interface GroupPeerMediaState extends PeerMediaState {
+  socketId: string;
+}
+
+export type GroupConnectionState =
+  | 'idle'
+  | 'requesting_media'
+  | 'lobby'
+  | 'joining'
+  | 'connected'
+  | 'error';
+
+export interface GroupChatMessage {
+  id: string;
+  senderSocketId: string;
+  text: string;
+  timestamp: number;
+}
+

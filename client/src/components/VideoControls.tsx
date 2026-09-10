@@ -11,7 +11,8 @@ import {
   FastForward, 
   PhoneOff, 
   Flag,
-  MessageSquare
+  MessageSquare,
+  Share2
 } from 'lucide-react';
 
 interface VideoControlsProps {
@@ -20,11 +21,14 @@ interface VideoControlsProps {
   onToggleCamera: () => void;
   onToggleMicrophone: () => void;
   onFlipCamera: () => void;
-  onNext: () => void;
+  onNext?: () => void;
   onEnd: () => void;
-  onReport: () => void;
+  onReport?: () => void;
   onToggleMobileChat?: () => void;
   containerRef: React.RefObject<HTMLDivElement>;
+  participantCount?: number;
+  onCopyInvite?: () => void;
+  hideNextButton?: boolean;
 }
 
 export const VideoControls: React.FC<VideoControlsProps> = ({
@@ -37,7 +41,10 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
   onEnd,
   onReport,
   onToggleMobileChat,
-  containerRef
+  containerRef,
+  participantCount,
+  onCopyInvite,
+  hideNextButton = false
 }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -58,115 +65,134 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
   };
 
   return (
-    <div className="w-full max-w-lg sm:w-fit mx-auto glass-dock p-2 sm:p-3 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 shadow-2xl border border-white/10 rounded-2xl">
+    <div className="w-fit max-w-[96vw] mx-auto glass-dock px-3 sm:px-4 py-2 sm:py-2.5 flex items-center justify-center gap-2 sm:gap-2.5 shadow-2xl border border-white/10 rounded-2xl sm:rounded-3xl">
       
-      {/* Row 1 on mobile (<sm) / Left Controls Group on tablet/desktop (sm+) */}
-      <div className="flex items-center justify-center gap-1.5 sm:gap-3 w-full sm:w-auto">
-        {/* Microphone Toggle */}
+      {/* Microphone Toggle */}
+      <motion.button
+        whileHover={{ scale: 1.06 }}
+        whileTap={{ scale: 0.94 }}
+        onClick={onToggleMicrophone}
+        aria-label={micOn ? "Mute microphone" : "Unmute microphone"}
+        title={micOn ? "Mute" : "Unmute"}
+        className={`w-10 h-10 sm:w-11 sm:h-11 min-w-[40px] min-h-[40px] rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-200 focus:outline-none shrink-0 ${
+          micOn
+            ? 'bg-slate-800/90 text-slate-100 hover:bg-slate-700'
+            : 'bg-rose-500/20 text-rose-400 border border-rose-500/40 hover:bg-rose-500/30'
+        }`}
+      >
+        {micOn ? <Mic className="w-4 h-4 sm:w-5 sm:h-5" /> : <MicOff className="w-4 h-4 sm:w-5 sm:h-5" />}
+      </motion.button>
+
+      {/* Camera Toggle */}
+      <motion.button
+        whileHover={{ scale: 1.06 }}
+        whileTap={{ scale: 0.94 }}
+        onClick={onToggleCamera}
+        aria-label={cameraOn ? "Turn off camera" : "Turn on camera"}
+        title={cameraOn ? "Turn off camera" : "Turn on camera"}
+        className={`w-10 h-10 sm:w-11 sm:h-11 min-w-[40px] min-h-[40px] rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-200 focus:outline-none shrink-0 ${
+          cameraOn
+            ? 'bg-slate-800/90 text-slate-100 hover:bg-slate-700'
+            : 'bg-rose-500/20 text-rose-400 border border-rose-500/40 hover:bg-rose-500/30'
+        }`}
+      >
+        {cameraOn ? <VideoIcon className="w-4 h-4 sm:w-5 sm:h-5" /> : <VideoOff className="w-4 h-4 sm:w-5 sm:h-5" />}
+      </motion.button>
+
+      {/* Flip Camera */}
+      <motion.button
+        whileHover={{ scale: 1.06 }}
+        whileTap={{ scale: 0.94 }}
+        onClick={onFlipCamera}
+        aria-label="Flip camera"
+        title="Switch Camera"
+        className="w-10 h-10 sm:w-11 sm:h-11 min-w-[40px] min-h-[40px] rounded-xl sm:rounded-2xl bg-slate-800/90 text-slate-300 hover:bg-slate-700 flex items-center justify-center transition-all duration-200 focus:outline-none shrink-0"
+      >
+        <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5" />
+      </motion.button>
+
+      {/* Fullscreen Toggle (Desktop / Tablet only) */}
+      <motion.button
+        whileHover={{ scale: 1.06 }}
+        whileTap={{ scale: 0.94 }}
+        onClick={toggleFullscreen}
+        aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+        title="Toggle Fullscreen"
+        className="hidden md:flex w-10 h-10 sm:w-11 sm:h-11 min-w-[40px] min-h-[40px] rounded-xl sm:rounded-2xl bg-slate-800/90 text-slate-300 hover:bg-slate-700 items-center justify-center transition-all duration-200 focus:outline-none shrink-0"
+      >
+        {isFullscreen ? <Minimize className="w-4 h-4 sm:w-5 sm:h-5" /> : <Maximize className="w-4 h-4 sm:w-5 sm:h-5" />}
+      </motion.button>
+
+      {/* Mobile Chat Toggle Button */}
+      {onToggleMobileChat && (
         <motion.button
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.92 }}
-          onClick={onToggleMicrophone}
-          aria-label={micOn ? "Mute microphone" : "Unmute microphone"}
-          className={`w-11 h-11 sm:w-12 sm:h-12 min-w-[44px] min-h-[44px] rounded-2xl flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-rose-500 shrink-0 ${
-            micOn
-              ? 'bg-slate-800/90 text-slate-100 hover:bg-slate-700'
-              : 'bg-rose-500/20 text-rose-400 border border-rose-500/40 hover:bg-rose-500/30'
-          }`}
+          whileHover={{ scale: 1.06 }}
+          whileTap={{ scale: 0.94 }}
+          onClick={onToggleMobileChat}
+          aria-label="Toggle text chat"
+          title="Chat"
+          className="md:hidden w-10 h-10 sm:w-11 sm:h-11 min-w-[40px] min-h-[40px] rounded-xl sm:rounded-2xl bg-slate-800/90 text-slate-100 hover:bg-slate-700 flex items-center justify-center transition-all duration-200 focus:outline-none shrink-0"
         >
-          {micOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+          <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
         </motion.button>
+      )}
 
-        {/* Camera Toggle */}
+      {/* Copy Invite Link Button (Group mode) */}
+      {onCopyInvite && (
         <motion.button
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.92 }}
-          onClick={onToggleCamera}
-          aria-label={cameraOn ? "Turn off camera" : "Turn on camera"}
-          className={`w-11 h-11 sm:w-12 sm:h-12 min-w-[44px] min-h-[44px] rounded-2xl flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-rose-500 shrink-0 ${
-            cameraOn
-              ? 'bg-slate-800/90 text-slate-100 hover:bg-slate-700'
-              : 'bg-rose-500/20 text-rose-400 border border-rose-500/40 hover:bg-rose-500/30'
-          }`}
+          whileHover={{ scale: 1.06 }}
+          whileTap={{ scale: 0.94 }}
+          onClick={onCopyInvite}
+          aria-label="Copy group invite link"
+          title="Invite Friends"
+          className="w-10 h-10 sm:w-11 sm:h-11 min-w-[40px] min-h-[40px] rounded-xl sm:rounded-2xl bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 hover:bg-indigo-600/40 flex items-center justify-center transition-all duration-200 focus:outline-none shrink-0"
         >
-          {cameraOn ? <VideoIcon className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
+          <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
         </motion.button>
+      )}
 
-        {/* Flip Camera (Available on all screens, especially mobile) */}
+      {/* Report Button (1-to-1 mode) */}
+      {onReport && (
         <motion.button
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.92 }}
-          onClick={onFlipCamera}
-          aria-label="Flip camera"
-          className="w-11 h-11 sm:w-12 sm:h-12 min-w-[44px] min-h-[44px] rounded-2xl bg-slate-800/90 text-slate-300 hover:bg-slate-700 flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-rose-500 shrink-0"
-        >
-          <RefreshCw className="w-5 h-5" />
-        </motion.button>
-
-        {/* Fullscreen Toggle (Desktop / Tablet only) */}
-        <motion.button
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.92 }}
-          onClick={toggleFullscreen}
-          aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-          className="hidden md:flex w-11 h-11 sm:w-12 sm:h-12 min-w-[44px] min-h-[44px] rounded-2xl bg-slate-800/90 text-slate-300 hover:bg-slate-700 items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-rose-500 shrink-0"
-        >
-          {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
-        </motion.button>
-
-        {/* Mobile Chat Toggle Button */}
-        {onToggleMobileChat && (
-          <motion.button
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.92 }}
-            onClick={onToggleMobileChat}
-            aria-label="Toggle text chat"
-            title="Chat"
-            className="md:hidden w-11 h-11 sm:w-12 sm:h-12 min-w-[44px] min-h-[44px] rounded-2xl bg-slate-800/90 text-slate-100 hover:bg-slate-700 flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-rose-500 shrink-0"
-          >
-            <MessageSquare className="w-5 h-5" />
-          </motion.button>
-        )}
-
-        {/* Report Button */}
-        <motion.button
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.92 }}
+          whileHover={{ scale: 1.06 }}
+          whileTap={{ scale: 0.94 }}
           onClick={onReport}
           aria-label="Report or block user"
           title="Report / Block"
-          className="w-11 h-11 sm:w-12 sm:h-12 min-w-[44px] min-h-[44px] rounded-2xl bg-slate-800/90 text-amber-400 hover:bg-amber-500/20 border border-transparent flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500 shrink-0"
+          className="w-10 h-10 sm:w-11 sm:h-11 min-w-[40px] min-h-[40px] rounded-xl sm:rounded-2xl bg-slate-800/90 text-amber-400 hover:bg-amber-500/20 border border-transparent flex items-center justify-center transition-all duration-200 focus:outline-none shrink-0"
         >
-          <Flag className="w-5 h-5" />
+          <Flag className="w-4 h-4 sm:w-5 sm:h-5" />
         </motion.button>
-      </div>
+      )}
 
-      {/* Row 2 on mobile (<sm) / Right Action Controls Group on tablet/desktop (sm+) */}
-      <div className="flex items-center justify-center gap-2 sm:gap-3 w-full sm:w-auto">
-        {/* Primary Action: NEXT */}
-        <motion.button
-          whileHover={{ scale: 1.04 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onNext}
-          aria-label="Next user"
-          className="spidey2-btn-red text-white text-sm sm:text-base font-bold min-h-[44px] h-11 sm:h-12 px-5 sm:px-7 rounded-2xl flex-1 sm:flex-initial flex items-center justify-center space-x-2 shadow-lg transition-all duration-200 font-heading min-w-[120px] sm:min-w-[130px] shrink-0"
-        >
-          <span>NEXT</span>
-          <FastForward className="w-4 h-4 sm:w-5 sm:h-5" />
-        </motion.button>
+      {/* Primary Action: NEXT (1-to-1 Mode only) */}
+      {!hideNextButton && onNext && (
+        <>
+          <div className="h-6 w-px bg-white/10 mx-0.5 shrink-0" />
+          <motion.button
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
+            onClick={onNext}
+            aria-label="Next user"
+            className="spidey2-btn-red text-white text-xs sm:text-sm font-bold min-h-[40px] h-10 sm:h-11 px-4 sm:px-6 rounded-xl sm:rounded-2xl flex items-center justify-center space-x-1.5 shadow-lg transition-all duration-200 font-heading shrink-0"
+          >
+            <span>NEXT</span>
+            <FastForward className="w-4 h-4" />
+          </motion.button>
+        </>
+      )}
 
-        {/* End Call Button */}
-        <motion.button
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.92 }}
-          onClick={onEnd}
-          aria-label="End call"
-          title="End conversation"
-          className="w-11 h-11 sm:w-12 sm:h-12 min-w-[44px] min-h-[44px] rounded-2xl bg-rose-600 text-white hover:bg-rose-700 flex items-center justify-center transition-all duration-200 shadow-md shadow-rose-600/20 focus:outline-none focus:ring-2 focus:ring-rose-500 shrink-0"
-        >
-          <PhoneOff className="w-5 h-5" />
-        </motion.button>
-      </div>
+      {/* End Call Button */}
+      <motion.button
+        whileHover={{ scale: 1.06 }}
+        whileTap={{ scale: 0.94 }}
+        onClick={onEnd}
+        aria-label="End call"
+        title="Leave call"
+        className="w-10 h-10 sm:w-11 sm:h-11 min-w-[40px] min-h-[40px] rounded-xl sm:rounded-2xl bg-rose-600 text-white hover:bg-rose-700 flex items-center justify-center transition-all duration-200 shadow-md shadow-rose-600/20 focus:outline-none shrink-0"
+      >
+        <PhoneOff className="w-4 h-4 sm:w-5 sm:h-5" />
+      </motion.button>
 
     </div>
   );

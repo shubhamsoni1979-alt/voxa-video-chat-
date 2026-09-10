@@ -1,7 +1,7 @@
 import Redis from 'ioredis';
 import { config } from '../config/env';
 import { logger } from '../utils/logger';
-import { MatchmakingUser, RoomState, UserSession } from '../types';
+import { MatchmakingUser, RoomState, UserSession, GroupRoomState } from '../types';
 
 class RedisService {
   private redisClient: Redis | null = null;
@@ -11,6 +11,7 @@ class RedisService {
   private memoryQueue: MatchmakingUser[] = [];
   private memorySessions: Map<string, UserSession> = new Map();
   private memoryRooms: Map<string, RoomState> = new Map();
+  private memoryGroupRooms: Map<string, GroupRoomState> = new Map();
   private memoryIpBlocklist: Map<string, Set<string>> = new Map();
 
   constructor() {
@@ -32,6 +33,12 @@ class RedisService {
       for (const [roomId, room] of this.memoryRooms.entries()) {
         if (now - room.createdAt > 7200000) {
           this.memoryRooms.delete(roomId);
+        }
+      }
+      // Clean stale group rooms older than 2 hours
+      for (const [roomId, room] of this.memoryGroupRooms.entries()) {
+        if (now - room.createdAt > 7200000) {
+          this.memoryGroupRooms.delete(roomId);
         }
       }
     }, 300000); // Sweep every 5 minutes
@@ -213,6 +220,51 @@ class RedisService {
     if (this.isRedisConnected && this.redisClient) {
       try {
         await this.redisClient.del(`room:${roomId}`);
+      } catch (e) {}
+    }
+  }
+
+  // --- Group Room Management ---
+  async createGroupRoom(room: GroupRoomState): Promise<void> {
+    this.memoryGroupRooms.set(room.roomId, room);
+    if (this.isRedisConnected && this.redisClient) {
+      try {
+        await this.redisClient.setex(`group_room:${room.roomId}`, 7200, JSON.stringify(room));
+      } catch (e) {}
+    }
+  }
+
+  async getGroupRoom(roomId: string): Promise<GroupRoomState | null> {
+    const memRoom = this.memoryGroupRooms.get(roomId);
+    if (memRoom) return memRoom;
+
+    if (this.isRedisConnected && this.redisClient) {
+      try {
+        const raw = await this.redisClient.get(`group_room:${roomId}`);
+        if (raw) {
+          const room: GroupRoomState = JSON.parse(raw);
+          this.memoryGroupRooms.set(roomId, room);
+          return room;
+        }
+      } catch (e) {}
+    }
+    return null;
+  }
+
+  async updateGroupRoom(room: GroupRoomState): Promise<void> {
+    this.memoryGroupRooms.set(room.roomId, room);
+    if (this.isRedisConnected && this.redisClient) {
+      try {
+        await this.redisClient.setex(`group_room:${room.roomId}`, 7200, JSON.stringify(room));
+      } catch (e) {}
+    }
+  }
+
+  async deleteGroupRoom(roomId: string): Promise<void> {
+    this.memoryGroupRooms.delete(roomId);
+    if (this.isRedisConnected && this.redisClient) {
+      try {
+        await this.redisClient.del(`group_room:${roomId}`);
       } catch (e) {}
     }
   }
